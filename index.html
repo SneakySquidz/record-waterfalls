@@ -49,7 +49,9 @@ a{color:var(--accent)}
 .viewer{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(290px,1fr);gap:18px;align-items:start}
 .stagebox{min-width:0;display:flex;flex-direction:column;gap:10px}
 .stage{position:relative;aspect-ratio:1000/620;max-width:100%;background:var(--stage);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
-.stage canvas{display:block;width:100%;height:100%}
+.stage canvas{position:absolute;inset:0;display:block;width:100%;height:100%;transition:opacity .35s ease}
+.stage.swap canvas{opacity:0;transition:none}
+@media (prefers-reduced-motion:reduce){.stage canvas{transition:none}}
 .badge{position:absolute;left:12px;top:12px;background:rgba(6,16,18,.72);color:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:500;backdrop-filter:blur(4px);max-width:calc(100% - 24px)}
 .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .bar .now{flex:1 1 160px;min-width:0;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
@@ -116,7 +118,8 @@ a{color:var(--accent)}
 
   <section class="viewer">
     <div class="stagebox">
-      <div class="stage">
+      <div class="stage" id="stage">
+        <canvas id="gl" aria-hidden="true"></canvas>
         <canvas id="cv" role="img" aria-label="Animated drawing of the selected waterfall"></canvas>
         <div class="badge" id="badge"></div>
       </div>
@@ -247,16 +250,244 @@ const NOTES=[
 ];
 /*DATA-END*/
 
-/* ============================== ENGINE ============================== */
+/* ============================== ENGINE ==============================
+   A scene is a stack of layers. Static layers (rock, sky, trees) are painted once in 2D. Water and mist are
+   described by Fall, Flow and Mist objects: with WebGL they are drawn by fragment shaders; without it each
+   object draws itself in 2D (streaks and soft sprites), so the page still works. */
 const W=1000,H=620;
 let FS=13; // label size in scene units, set on resize
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const fnOf=v=>typeof v==='function'?v:()=>v;
 function rgba(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`}
+const hex3=hex=>{const n=parseInt(hex.slice(1),16);return [(n>>16)/255,(n>>8&255)/255,(n&255)/255]};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,k)=>a+(b-a)*k;
 const smooth=k=>{k=clamp(k,0,1);return k*k*(3-2*k)};
+const G=9.81;
 
+const sprites={};
+function sprite(col){if(sprites[col])return sprites[col];const s=document.createElement('canvas');s.width=s.height=64;const x=s.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,rgba(col,1));g.addColorStop(.45,rgba(col,.45));g.addColorStop(1,rgba(col,0));x.fillStyle=g;x.fillRect(0,0,64,64);return sprites[col]=s}
+
+/* A painted, static layer. alpha can be changed while the scene runs. */
+class Still{
+  constructor(cv){this.kind='still';this.cv=cv;this.alpha=1}
+  draw(c){if(this.alpha<.004)return;c.save();c.setTransform(1,0,0,1,0,0);c.globalAlpha=this.alpha;c.drawImage(this.cv,0,0);c.restore()}
+}
+
+/* Falling water between a lip top(x) and a base bot(x), for x0..x1. g and v0 are in scene units, so a fall
+   drawn to scale and given g = 9.81 × scale drops at real free-fall speed. */
+class Fall{
+  constructor(R,o){Object.assign(this,{kind:'fall',n:120,g:900,v0:40,vmax:900,col:'#ffffff',body:'#cfeaf0',foam:'#ffffff',shade:'#b4cddc',bodyA:.9,lw:1.6,atom:1.01,foamAt:.35,wind:0,sway:0,spread:0,fine:1,streak:.14,minLen:5,flow:1,seed:R()*40},o);
+    this.top=fnOf(o.top);this.bot=fnOf(o.bot);this.R=R;this.p=[];
+    for(let i=0;i<this.n;i++){const p={};this.spawn(p);const k=R();p.y=p.top+(p.bot-p.top)*k*k;p.v=Math.min(this.vmax,Math.sqrt(p.v*p.v+2*this.g*(p.y-p.top)));this.p.push(p)}}
+  spawn(p){const R=this.R;p.r=R();p.x=lerp(this.x0,this.x1,p.r);p.top=this.top(p.x);p.bot=this.bot(p.x);p.y=p.top;p.v=this.v0*(.5+R());p.a=.3+R()*.7;p.l=.6+R()*.9;p.ph=R()*6.28}
+  // 2D fallback: a translucent body with streaks falling through it
+  draw(c,dt,t){const f=this.flow;if(f<.01)return;
+    if(this.bodyA>0){const N=Math.max(2,Math.ceil((this.x1-this.x0)/10));let mt=1e9,mb=-1e9;c.beginPath();
+      for(let i=0;i<=N;i++){const x=lerp(this.x0,this.x1,i/N),y=this.top(x);mt=Math.min(mt,y);i?c.lineTo(x,y):c.moveTo(x,y)}
+      for(let i=N;i>=0;i--){const x=lerp(this.x0,this.x1,i/N),y=this.bot(x);mb=Math.max(mb,y);c.lineTo(x+this.wind*(this.atom<1?.5:1)+this.spread*(2*i/N-1),y)}
+      c.closePath();const g=c.createLinearGradient(0,mt,0,mb);g.addColorStop(0,rgba(this.body,this.bodyA*f));
+      if(this.atom<1){g.addColorStop(this.atom*.7,rgba(this.foam,this.bodyA*f*.7));g.addColorStop(Math.min(1,this.atom+.3),rgba(this.foam,0))}
+      else{g.addColorStop(this.foamAt,rgba(this.foam,this.bodyA*f*.85));g.addColorStop(1,rgba(this.foam,this.bodyA*f))}
+      c.fillStyle=g;c.fill()}
+    c.strokeStyle=this.col;c.lineCap='round';const n=Math.round(this.p.length*Math.min(1,f*1.1));
+    for(let i=0;i<n;i++){const p=this.p[i];p.v=Math.min(this.vmax,p.v+this.g*dt);p.y+=p.v*dt;if(p.y>=p.bot)this.spawn(p);
+      const fr=(p.y-p.top)/(p.bot-p.top);let a=p.a*(.4+.6*f);let lw=this.lw;
+      if(this.atom<1&&fr>this.atom){const k=(fr-this.atom)/(1-this.atom);a*=1-k;lw*=1+k*2.5}
+      const x=p.x+this.wind*fr*fr+this.spread*(2*p.r-1)*fr+this.sway*Math.sin(t*.8+p.ph)*fr;const len=Math.max(this.minLen,p.v*this.streak)*p.l;
+      c.globalAlpha=a;c.lineWidth=lw;c.beginPath();c.moveTo(x,Math.max(p.top,p.y-len));c.lineTo(x,p.y);c.stroke()}
+    c.globalAlpha=1}
+  // WebGL: a ribbon whose vertices carry (lateral position −1..1, distance fallen, total height)
+  mesh(){const w0=this.x1-this.x0,N=clamp(Math.ceil(w0/14),1,90),M=16,pad=5+Math.abs(this.sway)*1.2+(this.atom<1?12:0),v=[],ix=[],cols=N+3;
+    for(let j=0;j<=M;j++){const fr=j/M,hw=Math.max(1,w0/2+this.spread*fr),cp=1+pad/hw;
+      for(let i=-1;i<=N+1;i++){const s=clamp(i/N,0,1),c0=2*s-1,x=lerp(this.x0,this.x1,s),yt=this.top(x),yb=this.bot(x),o=i<0?-pad:i>N?pad:0;
+        v.push(x+this.wind*fr*fr+this.spread*c0*fr+o,lerp(yt,yb,fr),i<0?-cp:i>N?cp:c0,(yb-yt)*fr,yb-yt,0)}}
+    for(let j=0;j<M;j++)for(let i=0;i<cols-1;i++){const a=j*cols+i,b=a+cols;ix.push(a,a+1,b,a+1,b+1,b)}
+    return {v,ix}}
+}
+
+/* Mist or spray: it is born in the box x0..x1, y0..y1, rises and drifts for `life` seconds, and grows as it goes. */
+class Mist{
+  constructor(R,o){Object.assign(this,{kind:'mist',n:30,size:90,rise:14,drift:6,a:.22,life:6,col:'#ffffff',sh:null,grow:.9,flow:1,op:null,seed:R()*40},o);this.R=R;this.spr=sprite(this.col);this.p=[];
+    if(!this.sh){const c=hex3(this.col);this.sh='#'+c.map((v,i)=>Math.round(255*v*[.74,.82,.9][i]).toString(16).padStart(2,'0')).join('')}
+    if(this.op==null){ // overall opacity of the shader cloud, matched to how much the fallback sprites overlap
+      const r=this.size*(1+this.grow/2)*.5,area=(this.x1-this.x0+2*r+Math.abs(this.drift)*this.life)*(this.y1-this.y0+2*r+Math.abs(this.rise)*this.life);
+      this.op=clamp((1-Math.exp(-this.a*this.n*Math.PI*r*r*.64/area*1.5))*.62,.06,.75)}
+    for(let i=0;i<this.n;i++){const p={};this.spawn(p);p.age=R()*p.life;this.p.push(p)}}
+  spawn(p){const R=this.R;p.x=lerp(this.x0,this.x1,R());p.y=lerp(this.y0,this.y1,R());p.age=0;p.life=this.life*(.6+R()*.8);p.s=this.size*(.6+R()*.8)}
+  draw(c,dt){if(this.flow<.01)return;for(const p of this.p){p.age+=dt;if(p.age>p.life)this.spawn(p);const k=p.age/p.life,s=p.s*(1+k*this.grow);
+      c.globalAlpha=this.a*Math.sin(Math.PI*k)*this.flow;c.drawImage(this.spr,p.x+this.drift*p.age-s/2,p.y-this.rise*p.age-s/2,s,s)}c.globalAlpha=1}
+  mesh(){const r=this.size*.5*(1+this.grow)+this.size*.6,dx=this.drift*this.life,dy=-this.rise*this.life;
+    const xa=Math.min(this.x0,this.x0+dx)-r,xb=Math.max(this.x1,this.x1+dx)+r,ya=Math.min(this.y0,this.y0+dy)-r,yb=Math.max(this.y1,this.y1+dy)+r;
+    return {v:[xa,ya,0,0,0,0, xb,ya,0,0,0,0, xa,yb,0,0,0,0, xb,yb,0,0,0,0],ix:[0,1,2,1,3,2]}}
+}
+
+/* Moving water seen from above or along its surface: a river, rapids, a pool, a current. The surface is a band
+   P(s,t), s across (0..1) and t along (0..1); by default a plain rectangle x0..x1, y0..y1. vel is in scene units a second. */
+class Flow{
+  constructor(R,o){Object.assign(this,{kind:'flow',n:60,vx:0,vy:20,col:'#ffffff',len:12,lw:1.4,a:.5,clip:null,scale:1,foam:[0,0],fade:[1,1],edge:[.03,.05],mode:0,rim:0,base:null,cols:24,rows:6,dyn:false,seed:R()*40},o);this.R=R;
+    if(!this.P){if(this.A){const A=this.A,B=this.B;this.P=(s,t)=>{const a=A(s),b=B(s);return [lerp(a[0],b[0],t),lerp(a[1],b[1],t)]}}
+      else{this.P=(s,t)=>[lerp(this.x0,this.x1,s),lerp(this.y0,this.y1,t)];this.cols=this.rows=1}}
+    const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1])||1;
+    if(!this.uw)this.uw=d(this.P(0,.5),this.P(1,.5));if(!this.vl)this.vl=d(this.P(.5,0),this.P(.5,1));
+    if(!this.vel)this.vel=[this.vx,this.vy];
+    this.p=[];for(let i=0;i<this.n;i++)this.p.push({s:R(),t:R(),sp:.6+R()*.8,a:.3+R()*.7})}
+  outline(c){const n=Math.max(2,this.cols);c.beginPath();for(let i=0;i<=n;i++){const q=this.P(i/n,0);i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1])}for(let i=n;i>=0;i--){const q=this.P(i/n,1);c.lineTo(q[0],q[1])}c.closePath()}
+  // 2D fallback: streaks sliding along the band
+  draw(c,dt){const sp=Math.hypot(this.vel[0],this.vel[1])||1,du=this.vel[0]/sp*this.len/this.uw,dv=this.vel[1]/sp*this.len/this.vl;c.save();if(this.clip){c.beginPath();this.clip(c);c.clip()}
+    if(this.base){this.outline(c);const a=this.P(.5,0),b=this.P(.5,1),g=c.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,rgba(this.base[0][0],this.base[0][1]));g.addColorStop(1,rgba(this.base[1][0],this.base[1][1]));c.fillStyle=g;c.fill()}
+    c.strokeStyle=this.col;c.lineWidth=this.lw;c.lineCap='round';
+    for(const p of this.p){p.s+=this.vel[0]/this.uw*p.sp*dt;p.t+=this.vel[1]/this.vl*p.sp*dt;p.s-=Math.floor(p.s);p.t-=Math.floor(p.t);
+      const q=this.P(p.s,p.t),q2=this.P(p.s-du*p.sp,p.t-dv*p.sp);
+      c.globalAlpha=this.a*p.a*lerp(this.fade[0],this.fade[1],p.t);c.beginPath();c.moveTo(q[0],q[1]);c.lineTo(q2[0],q2[1]);c.stroke()}
+    c.restore();c.globalAlpha=1}
+  mesh(){const N=this.cols,M=this.rows,v=[],ix=[];
+    for(let j=0;j<=M;j++)for(let i=0;i<=N;i++){const s=i/N,t=j/M,q=this.P(s,t);v.push(q[0],q[1],s*this.uw,t*this.vl,s,t)}
+    for(let j=0;j<M;j++)for(let i=0;i<N;i++){const a=j*(N+1)+i,b=a+N+1;ix.push(a,a+1,b,a+1,b+1,b)}
+    return {v,ix}}
+}
+
+/* ---------- WebGL: the water and mist shaders ---------- */
+const VERT=`attribute vec2 aP;attribute vec4 aA;varying vec4 vA;varying vec2 vP;
+void main(){vA=aA;vP=aP;gl_Position=vec4(aP.x/500.-1.,1.-aP.y/310.,0.,1.);}`;
+const FRAG_HEAD=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec4 vA;varying vec2 vP;uniform sampler2D uN;uniform float uT;
+// smooth value noise from a small random texture: four independent channels per lookup
+vec4 nz(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return texture2D(uN,(i+f+.5)/256.);}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*nz(p).r;p=p*2.03+vec2(17.3,9.1);a*=.5;}return s/.9375;}
+`;
+const FRAG={
+tex:`uniform sampler2D uS;uniform float uO;void main(){gl_FragColor=texture2D(uS,vP/vec2(1000.,620.))*uO;}`,
+/* Falling water. Every parcel keeps the pattern it had when it left the lip, so the pattern travels down at
+   free-fall speed and stretches as it accelerates: tau is the time since the parcel left the lip. */
+fall:`uniform vec4 uK;uniform vec4 uQ;uniform vec4 uL;uniform vec3 uBody,uFoam,uShade;
+void main(){
+  float d=max(vA.y,0.),h=max(vA.z,1.),fr=clamp(d/h,0.,1.),g=uK.x,v0=uK.y;
+  float tau=(sqrt(v0*v0+2.*g*d)-v0)/g,tt=uT-tau;
+  float w=uQ.z+2.*uQ.w*fr,fine=uL.x,sd=uL.z;
+  float gust=(nz(vec2(tt*.21+sd,sd*3.1)).g-.5)*2.;
+  float c=vA.x-uL.y*gust*fr*fr/(w*.5);
+  float u=c*uQ.z*.5;
+  float a1=nz(vec2(u*.42*fine+sd*7.,tt*1.9)).r;
+  float a2=nz(vec2(u*.15*fine+sd*13.+40.,tt*.95+9.)).g;
+  float a3=nz(vec2(u*.05*fine+7.,tt*.42+sd)).b;
+  float rill=nz(vec2(u*.11*fine+3.,sd*5.)).a;
+  float s=a1*.34+a2*.36+a3*.3;
+  float at=uK.z<1.?smoothstep(uK.z*.55,min(1.,uK.z+.4),fr):0.;
+  float flow=uQ.x;
+  float thr=mix(.78,.1,flow)+at*.2;
+  float cov=smoothstep(thr-.12,thr+.2,s*.7+rill*.3)*smoothstep(0.,.07,flow);
+  float ex=(1.-abs(c))*w*.5;
+  float edge=smoothstep(0.,1.5+at*w*.4+(1.-flow)*2.,ex+(a2-.5)*min(7.,w*.3));
+  edge*=mix(1.,sqrt(max(0.,1.-c*c)),clamp(1.-w/50.,0.,1.)*.7);
+  float fo=clamp(fr/max(uK.w,.02),0.,1.);
+  fo=clamp(fo*.7+fo*(s-.35)*1.4+(s-.5)*.45,0.,1.);
+  vec3 col=mix(uBody,uFoam,smoothstep(.1,.9,fo));
+  float sh=smoothstep(.26,.76,a1*.45+a2*.55);
+  col=mix(col*uShade,col,.35+.65*sh);
+  col+=.16*exp(-d*.13)*(.35+.65*a2);
+  col=mix(col,uFoam,at*.6);
+  float al=uQ.y*cov*edge*(1.-at*.92)*(.8+.2*sh)*smoothstep(0.,2.5,d)*(1.-.3*smoothstep(.92,1.,fr));
+  gl_FragColor=vec4(col*al,al);
+}`,
+/* Mist: the density a steady stream of growing puffs would leave behind, broken up by drifting noise. */
+mist:`uniform vec4 uB;uniform vec4 uV;uniform vec4 uM;uniform vec3 uCol,uSh;
+float sbox(vec2 p,vec2 c,vec2 hw,float r){vec2 q=abs(p-c)-hw;float dd=length(max(q,0.))+min(max(q.x,q.y),0.);return 1.-smoothstep(-r*.6,r,dd);}
+void main(){
+  vec2 c=(uB.xy+uB.zw)*.5,hw=(uB.zw-uB.xy)*.5,vel=vec2(uV.x,-uV.y);
+  float E=0.;
+  for(int i=0;i<8;i++){float k=(float(i)+.5)/8.;E+=sin(3.14159*k)*sbox(vP,c+vel*uV.z*k,hw,uM.x*.5*(1.+uV.w*k));}
+  E/=5.1;
+  if(E<.003)discard;
+  vec2 q=(vP-vel*uT)/uM.x*2.4+uM.w;
+  q+=.5*(nz(q*.6+vec2(uT*.031,-uT*.022)).rg-.5);
+  float dn=fbm(q+vec2(0.,uT*.045));
+  float m=E*(.22+1.6*dn);
+  float al=uM.y*uM.z*smoothstep(.03,.85,m);
+  vec3 col=mix(uSh,uCol,smoothstep(.3,.72,dn+(E-.5)*.25));
+  gl_FragColor=vec4(col*al,al);
+}`,
+/* Surface water: streaks and foam carried along the band. mode 1 is a dense current seen in section (billowing top). */
+flow:`uniform vec4 uP;uniform vec4 uF;uniform vec4 uVel;uniform vec4 uX;uniform vec3 uCol;uniform vec4 uB0,uB1;
+void main(){
+  float s=vA.z,t=vA.w;vec2 vel=uVel.xy;float sp=length(vel)+.0001;vec2 dir=vel/sp,nor=vec2(-dir.y,dir.x);
+  vec2 p=vA.xy-vel*uT,p2=vA.xy-vel*uT*.62;
+  vec2 q=vec2(dot(p,dir),dot(p,nor))*uP.y,q2=vec2(dot(p2,dir),dot(p2,nor))*uP.y;
+  float l1=nz(vec2(q.x*.03,q.y*.17)+uX.y).r;
+  float l2=nz(vec2(q.x*.085,q.y*.4)+31.7).g;
+  float l3=fbm(vec2(q2.x*.022,q2.y*.075)+11.+uX.y);
+  float streak=smoothstep(.56,.84,l1*.6+l2*.4);
+  float fm=mix(uF.x,uF.y,t);
+  float foam=fm>0.?smoothstep(1.-fm,1.32-fm,l3*.62+l2*.22+l1*.2):0.;
+  float al=clamp(streak*.5+foam,0.,1.);
+  if(uX.x>.5)al=smoothstep(0.,.62,t+(l3-.5)*.95)*(.42+.5*l3+.3*streak);
+  al*=uP.x*mix(uF.z,uF.w,t);
+  al*=smoothstep(0.,max(uP.z,.0001),s)*smoothstep(0.,max(uP.z,.0001),1.-s)*smoothstep(0.,max(uP.w,.0001),t)*smoothstep(0.,max(uP.w,.0001),1.-t);
+  vec4 b=mix(uB0,uB1,t);
+  float rim=uX.z*exp(-t*uX.w/5.)*(.6+.4*l2);
+  al=clamp(al+rim,0.,1.);
+  gl_FragColor=vec4(b.rgb*b.a*(1.-al)+uCol*al,b.a*(1.-al)+al);
+}`};
+
+const GLR={ok:false,gl:null,prog:{},
+  init(canvas){
+    try{
+      const o={alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:true,powerPreference:'high-performance'};
+      const gl=canvas.getContext('webgl',o)||canvas.getContext('experimental-webgl',o);if(!gl)return false;this.gl=gl;
+      const sh=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
+      const vs=sh(gl.VERTEX_SHADER,VERT);
+      for(const k in FRAG){const p=gl.createProgram();gl.attachShader(p,vs);gl.attachShader(p,sh(gl.FRAGMENT_SHADER,FRAG_HEAD+FRAG[k]));
+        gl.bindAttribLocation(p,0,'aP');gl.bindAttribLocation(p,1,'aA');gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+        const u={};const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const a=gl.getActiveUniform(p,i);u[a.name]=gl.getUniformLocation(p,a.name)}
+        this.prog[k]={p,u}}
+      const R=mulberry(77),px=new Uint8Array(256*256*4);for(let i=0;i<px.length;i++)px[i]=R()*256;
+      this.noise=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,this.noise);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,256,256,0,gl.RGBA,gl.UNSIGNED_BYTE,px);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+      this.quad=this.buf({v:[0,0,0,0,0,0, W,0,0,0,0,0, 0,H,0,0,0,0, W,H,0,0,0,0],ix:[0,1,2,1,3,2]});
+      gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+      this.ok=true;return true;
+    }catch(e){this.ok=false;return false}
+  },
+  buf(m,old){const gl=this.gl,b=old||{vbo:gl.createBuffer(),ibo:gl.createBuffer()};
+    gl.bindBuffer(gl.ARRAY_BUFFER,b.vbo);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(m.v),old?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(m.ix),gl.STATIC_DRAW);b.n=m.ix.length;return b},
+  prep(scene){const gl=this.gl;
+    for(const l of scene.layers){
+      if(l.kind==='still'){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,l.cv);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);l._t=t}
+      else if(isGL(l))l._b=this.buf(l.mesh())}
+  },
+  free(scene){const gl=this.gl;if(!gl)return;for(const l of scene.layers){if(l._t){gl.deleteTexture(l._t);l._t=null}if(l._b){gl.deleteBuffer(l._b.vbo);gl.deleteBuffer(l._b.ibo);l._b=null}}},
+  use(k,b,t){const gl=this.gl,pr=this.prog[k];gl.useProgram(pr.p);
+    gl.bindBuffer(gl.ARRAY_BUFFER,b.vbo);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.ibo);
+    gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(0,2,gl.FLOAT,false,24,0);gl.vertexAttribPointer(1,4,gl.FLOAT,false,24,8);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.noise);if(pr.u.uN)gl.uniform1i(pr.u.uN,0);if(pr.u.uT)gl.uniform1f(pr.u.uT,t);return pr.u},
+  render(scene,t){const gl=this.gl;gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);gl.clearColor(.03,.06,.065,1);gl.clear(gl.COLOR_BUFFER_BIT);
+    for(const l of scene.layers){
+      if(l.kind==='still'){if(l.alpha<.004||!l._t)continue;const u=this.use('tex',this.quad,t);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,l._t);gl.uniform1i(u.uS,1);gl.uniform1f(u.uO,l.alpha);gl.drawElements(gl.TRIANGLES,6,gl.UNSIGNED_SHORT,0);continue}
+      if(!l._b||l.flow<.004)continue;
+      if(l.kind==='fall'){const u=this.use('fall',l._b,t);
+        gl.uniform4f(u.uK,l.g,Math.max(l.v0,.5),l.atom,l.foamAt);gl.uniform4f(u.uQ,l.flow,l.bodyA,Math.max(1,l.x1-l.x0),l.spread);gl.uniform4f(u.uL,l.fine,l.sway,l.seed,0);
+        gl.uniform3fv(u.uBody,hex3(l.body));gl.uniform3fv(u.uFoam,hex3(l.foam));gl.uniform3fv(u.uShade,hex3(l.shade))}
+      else if(l.kind==='mist'){const u=this.use('mist',l._b,t);
+        gl.uniform4f(u.uB,l.x0,l.y0,l.x1,l.y1);gl.uniform4f(u.uV,l.drift,l.rise,l.life,l.grow);gl.uniform4f(u.uM,l.size,l.op,l.flow,l.seed);
+        gl.uniform3fv(u.uCol,hex3(l.col));gl.uniform3fv(u.uSh,hex3(l.sh))}
+      else if(l.kind==='flow'){if(l.dyn)this.buf(l.mesh(),l._b);const u=this.use('flow',l._b,t),b=l.base;
+        gl.uniform4f(u.uP,l.a,l.scale,l.edge[0],l.edge[1]);gl.uniform4f(u.uF,l.foam[0],l.foam[1],l.fade[0],l.fade[1]);
+        gl.uniform4f(u.uVel,l.vel[0],l.vel[1],0,0);gl.uniform4f(u.uX,l.mode,l.seed,l.rim,l.vl);gl.uniform3fv(u.uCol,hex3(l.col));
+        gl.uniform4f(u.uB0,...(b?[...hex3(b[0][0]),b[0][1]]:[0,0,0,0]));gl.uniform4f(u.uB1,...(b?[...hex3(b[1][0]),b[1][1]]:[0,0,0,0]))}
+      gl.drawElements(gl.TRIANGLES,l._b.n,gl.UNSIGNED_SHORT,0)}
+  }
+};
+// layers the shaders can draw; anything else is drawn in 2D on the overlay canvas
+const isGL=l=>l.kind==='still'||l.kind==='fall'||l.kind==='mist'||(l.kind==='flow'&&!l.clip);
+
+/* ============================== DRAWING HELPERS ============================== */
 function sky(c,a,b,y1=H){const g=c.createLinearGradient(0,0,0,y1);g.addColorStop(0,a);g.addColorStop(1,b);c.fillStyle=g;c.fillRect(0,0,W,H)}
 function poly(c,pts,fill){c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fillStyle=fill;c.fill()}
 function rock(c,R,pts,c0,c1,o={}){
@@ -278,51 +509,8 @@ function dimH(c,x0,x1,y,s,below=false){seg(c,x0,y,x1,y);seg(c,x0,y-6,x0,y+6);seg
 function eiffel(c,x,base,h){const b=h*.19;const P=[[-b,0],[-b*.45,-h*.3],[-b*.18,-h*.62],[-b*.035,-h],[b*.035,-h],[b*.18,-h*.62],[b*.45,-h*.3],[b,0],[b*.6,0],[0,-h*.17],[-b*.6,0]].map(p=>[x+p[0],base+p[1]]);
   c.beginPath();P.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fillStyle='rgba(255,255,255,.9)';c.strokeStyle='rgba(6,16,18,.6)';c.lineWidth=1.5;c.stroke();c.fill()}
 
-const sprites={};
-function sprite(col){if(sprites[col])return sprites[col];const s=document.createElement('canvas');s.width=s.height=64;const x=s.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,rgba(col,1));g.addColorStop(.45,rgba(col,.45));g.addColorStop(1,rgba(col,0));x.fillStyle=g;x.fillRect(0,0,64,64);return sprites[col]=s}
-
-class Fall{
-  constructor(R,o){Object.assign(this,{n:120,g:900,v0:40,vmax:900,col:'#ffffff',body:'#cfeaf0',foam:'#ffffff',bodyA:.9,lw:1.6,atom:1.01,foamAt:.35,wind:0,sway:0,streak:.14,minLen:5,flow:1},o);
-    this.top=fnOf(o.top);this.bot=fnOf(o.bot);this.R=R;this.p=[];
-    for(let i=0;i<this.n;i++){const p={};this.spawn(p);const k=R();p.y=p.top+(p.bot-p.top)*k*k;p.v=Math.min(this.vmax,Math.sqrt(p.v*p.v+2*this.g*(p.y-p.top)));this.p.push(p)}}
-  spawn(p){const R=this.R;p.x=this.x0+R()*(this.x1-this.x0);p.top=this.top(p.x);p.bot=this.bot(p.x);p.y=p.top;p.v=this.v0*(.5+R());p.a=.3+R()*.7;p.l=.6+R()*.9;p.ph=R()*6.28}
-  draw(c,dt,t){const f=this.flow;if(f<.01)return;
-    if(this.bodyA>0){const N=Math.max(2,Math.ceil((this.x1-this.x0)/10));let mt=1e9,mb=-1e9;c.beginPath();
-      for(let i=0;i<=N;i++){const x=lerp(this.x0,this.x1,i/N),y=this.top(x);mt=Math.min(mt,y);i?c.lineTo(x,y):c.moveTo(x,y)}
-      for(let i=N;i>=0;i--){const x=lerp(this.x0,this.x1,i/N),y=this.bot(x);mb=Math.max(mb,y);c.lineTo(x+this.wind*(this.atom<1?.5:1),y)}
-      c.closePath();const g=c.createLinearGradient(0,mt,0,mb);g.addColorStop(0,rgba(this.body,this.bodyA*f));
-      if(this.atom<1){g.addColorStop(this.atom*.7,rgba(this.foam,this.bodyA*f*.7));g.addColorStop(Math.min(1,this.atom+.3),rgba(this.foam,0))}
-      else{g.addColorStop(this.foamAt,rgba(this.foam,this.bodyA*f*.85));g.addColorStop(1,rgba(this.foam,this.bodyA*f))}
-      c.fillStyle=g;c.fill()}
-    c.strokeStyle=this.col;c.lineCap='round';const n=Math.round(this.p.length*Math.min(1,f*1.1));
-    for(let i=0;i<n;i++){const p=this.p[i];p.v=Math.min(this.vmax,p.v+this.g*dt);p.y+=p.v*dt;if(p.y>=p.bot)this.spawn(p);
-      const fr=(p.y-p.top)/(p.bot-p.top);let a=p.a*(.4+.6*f);let lw=this.lw;
-      if(this.atom<1&&fr>this.atom){const k=(fr-this.atom)/(1-this.atom);a*=1-k;lw*=1+k*2.5}
-      const x=p.x+this.wind*fr*fr+this.sway*Math.sin(t*.8+p.ph)*fr;const len=Math.max(this.minLen,p.v*this.streak)*p.l;
-      c.globalAlpha=a;c.lineWidth=lw;c.beginPath();c.moveTo(x,Math.max(p.top,p.y-len));c.lineTo(x,p.y);c.stroke()}
-    c.globalAlpha=1}
-}
-class Mist{
-  constructor(R,o){Object.assign(this,{n:30,size:90,rise:14,drift:6,a:.22,life:6,col:'#ffffff',grow:.9,flow:1},o);this.R=R;this.spr=sprite(this.col);this.p=[];
-    for(let i=0;i<this.n;i++){const p={};this.spawn(p);p.age=R()*p.life;this.p.push(p)}}
-  spawn(p){const R=this.R;p.x=lerp(this.x0,this.x1,R());p.y=lerp(this.y0,this.y1,R());p.age=0;p.life=this.life*(.6+R()*.8);p.s=this.size*(.6+R()*.8)}
-  draw(c,dt){if(this.flow<.01)return;for(const p of this.p){p.age+=dt;if(p.age>p.life)this.spawn(p);const k=p.age/p.life,s=p.s*(1+k*this.grow);
-      c.globalAlpha=this.a*Math.sin(Math.PI*k)*this.flow;c.drawImage(this.spr,p.x+this.drift*p.age-s/2,p.y-this.rise*p.age-s/2,s,s)}c.globalAlpha=1}
-}
-class Flow{
-  constructor(R,o){Object.assign(this,{n:60,vx:0,vy:20,col:'#ffffff',len:12,lw:1.4,a:.5,clip:null},o);this.R=R;this.p=[];
-    for(let i=0;i<this.n;i++)this.p.push({x:lerp(this.x0,this.x1,R()),y:lerp(this.y0,this.y1,R()),s:.6+R()*.8,a:.3+R()*.7})}
-  draw(c,dt){const sp=Math.hypot(this.vx,this.vy)||1,ux=this.vx/sp,uy=this.vy/sp;c.save();if(this.clip){c.beginPath();this.clip(c);c.clip()}
-    c.strokeStyle=this.col;c.lineWidth=this.lw;c.lineCap='round';
-    for(const p of this.p){p.x+=this.vx*p.s*dt;p.y+=this.vy*p.s*dt;
-      if(p.x>this.x1)p.x=this.x0;else if(p.x<this.x0)p.x=this.x1;if(p.y>this.y1)p.y=this.y0;else if(p.y<this.y0)p.y=this.y1;
-      c.globalAlpha=this.a*p.a;c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x-ux*this.len*p.s,p.y-uy*this.len*p.s);c.stroke()}
-    c.restore();c.globalAlpha=1}
-}
-const G=9.81;
-
 /* ============================== SCENES ==============================
-   Each scene paints a static background (bg) and foreground (fg), and returns the moving layers drawn between them. */
+   Each scene paints a static background (bg) and labels (fg), and returns the layers drawn between them. */
 const SCENES={
 angel({bg,fg,R}){
   const s=.47,top=96,pl=top+807*s,base=top+979*s;
@@ -619,27 +807,46 @@ guaira({bg,fg,R}){
 
 /* ============================== APP ============================== */
 const $=id=>document.getElementById(id);
-const cv=$('cv'),ctx=cv.getContext('2d');
-let cur=0,scene=null,bgC=document.createElement('canvas'),fgC=document.createElement('canvas'),K=1,t=0,last=0,paused=false,tour=false,tourT=0,metric='height';
+const cv=$('cv'),ctx=cv.getContext('2d'),glc=$('gl'),stage=$('stage');
+let cur=0,scene=null,K=1,t=0,last=0,paused=false,tour=false,tourT=0,metric='height',resizeQ=0;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const nf=new Intl.NumberFormat('en-GB');
 const fmt=(v,u)=>v==null?'no sourced figure':(typeof v==='string'?v:nf.format(v))+(u?' '+u:'');
+// WebGL draws the water and mist. Without it (or with ?gl=0 in the address) everything is drawn in 2D instead.
+function startGL(){
+  if(/[?&]gl=0\b/.test(location.search)||!GLR.init(glc)){stopGL();return}
+  stage.dataset.render='webgl';
+  glc.addEventListener('webglcontextlost',e=>{e.preventDefault();stopGL();build()});
+}
+function stopGL(){GLR.ok=false;glc.style.display='none';stage.dataset.render='2d'}
 
 function build(){
   const r=cv.getBoundingClientRect();if(!r.width)return;
-  const dpr=Math.min(2,window.devicePixelRatio||1);
-  cv.width=bgC.width=fgC.width=Math.round(r.width*dpr);cv.height=bgC.height=fgC.height=Math.round(r.width*dpr*H/W);
-  K=cv.width/W;FS=clamp(11*W/r.width,13,27);
-  const bg=bgC.getContext('2d'),fg=fgC.getContext('2d');
-  for(const c of [bg,fg]){c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.setTransform(K,0,0,K,0,0)}
-  const f=FALLS[cur];scene=SCENES[f.id]({bg,fg,R:mulberry(f.seed||7)});
-  frame(0,true);
+  const dpr=Math.min(2,window.devicePixelRatio||1),pw=Math.round(r.width*dpr),ph=Math.round(r.width*dpr*H/W);
+  cv.width=pw;cv.height=ph;K=pw/W;FS=clamp(11*W/r.width,13,27);
+  if(scene&&GLR.ok)GLR.free(scene);
+  const mk=()=>{const c=document.createElement('canvas');c.width=pw;c.height=ph;const x=c.getContext('2d');x.setTransform(K,0,0,K,0,0);return x};
+  const bg=mk(),fg=mk(),f=FALLS[cur];
+  // still() gives a scene one more painted layer to place anywhere in its stack (rock or trees in front of water, say)
+  const out=SCENES[f.id]({bg,fg,R:mulberry(f.seed||7),still(){const x=mk();x.layer=new Still(x.canvas);return x}});
+  scene={layers:[new Still(bg.canvas),...out.layers],fg:fg.canvas,dirty:true};
+  scene.over=scene.layers.filter(l=>!isGL(l));
+  if(GLR.ok){glc.width=pw;glc.height=ph;try{GLR.prep(scene)}catch(e){stopGL()}}
+  frame(0);
 }
-function frame(dt,force){
+function frame(dt){
   if(!scene)return;
-  ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(bgC,0,0);ctx.setTransform(K,0,0,K,0,0);
-  for(const l of scene.layers)l.draw(ctx,dt,t);
-  ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(fgC,0,0);
+  for(const l of scene.layers)if(l.update)l.update(dt,t);
+  if(GLR.ok){
+    GLR.render(scene,t);
+    if(!scene.over.length&&!scene.dirty)return; // labels only: the overlay is drawn once
+    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);ctx.setTransform(K,0,0,K,0,0);
+    for(const l of scene.over)l.draw(ctx,dt,t);
+  }else{
+    ctx.setTransform(K,0,0,K,0,0);
+    for(const l of scene.layers)l.draw(ctx,dt,t);
+  }
+  ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(scene.fg,0,0);scene.dirty=false;
 }
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000||0);last=now;
@@ -662,7 +869,8 @@ function select(i,fromHash){
   document.querySelectorAll('.pick').forEach((b,j)=>b.setAttribute('aria-current',j===cur));
   document.querySelectorAll('.row').forEach(b=>b.classList.toggle('on',b.dataset.id===f.id));
   if(!fromHash){try{history.replaceState(null,'','#'+f.id)}catch(e){location.hash=f.id}}
-  build();
+  stage.classList.add('swap');build();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>stage.classList.remove('swap')));
 }
 const METRICS={height:{label:'Total height',unit:'m',log:false,note:'Bars are to scale with each other.'},
   width:{label:'Width',unit:'m',log:false,note:'Bars are to scale with each other.'},
@@ -692,8 +900,8 @@ function init(){
   $('theme').onclick=()=>{root.dataset.theme=isDark()?'light':'dark';lab()};lab();
   const fromHash=()=>{const i=FALLS.findIndex(f=>'#'+f.id===location.hash);return i<0?0:i};
   window.addEventListener('hashchange',()=>{const i=fromHash();if(i!==cur)select(i,true)});
-  new ResizeObserver(()=>build()).observe(cv);
-  select(fromHash(),true);compare();
+  new ResizeObserver(()=>{cancelAnimationFrame(resizeQ);resizeQ=requestAnimationFrame(build)}).observe(cv);
+  startGL();select(fromHash(),true);compare();
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(build);
   if(reduce)setPaused(true);
   requestAnimationFrame(loop);
