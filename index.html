@@ -171,7 +171,7 @@ const FALLS=[
  blurb:'Water leaves the flat top of a sandstone table mountain and falls 807 m without touching rock. The drop is so long that much of the stream turns to mist before it reaches the ground.',
  height:979,drop:807,width:150,widthNote:'at the base, one source',flow:null,flowNote:'no sourced figure',status:'solid',
  claim:'The 807 m plunge is the tallest uninterrupted drop on record. The 979 m total comes from a 1949 survey taken about 2 km away, and the World Waterfall Database questions it.',
- anim:'The 807 m plunge and the 979 m total are to scale against the Eiffel Tower. The water falls at real free-fall speed, so the stream takes about 13 seconds to come down and fades into spray on the way; the marker follows one drop. The cliff, the thin second fall, the lower cascades and the forest are drawn by eye from photographs.',
+ anim:'The 807 m plunge and the 979 m total are to scale against the Eiffel Tower. The water falls at real free-fall speed, so the stream takes about 13 seconds to come down and fades into spray on the way; the marker follows one drop. Where the browser allows it the mountain is a 3D model that the view drifts around: heights are marked in the plane of the fall, where they are to scale, and things nearer the viewer look larger. The model is shaped by eye from photographs, not from survey data, as are the thin second fall, the stream below and the forest.',
  src:[['Britannica','https://www.britannica.com/place/Angel-Falls'],['World Waterfall Database','https://www.worldwaterfalldatabase.com/waterfall/Kerepakupai-Meru-1']]},
 {id:'tugela',seed:23,name:'Tugela Falls',short:'Tugela Falls',tag:'Rival for tallest on Earth',place:'Drakensberg Amphitheatre, South Africa',
  blurb:'A thin stream steps down the basalt wall of the Amphitheatre in five leaps. It drains a very small catchment, so it is often a trickle and sometimes dry.',
@@ -361,6 +361,44 @@ varying vec4 vA;varying vec2 vP;uniform sampler2D uN;uniform float uT;
 vec4 nz(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return texture2D(uN,(i+f+.5)/256.);}
 float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*nz(p).r;p=p*2.03+vec2(17.3,9.1);a*=.5;}return s/.9375;}
 `;
+/* 3D. Terrain is a height field; its colour comes from where a point is and how steep the ground is there. */
+const VERT_T=`attribute vec3 aP;attribute vec3 aA;uniform mat4 uM;varying vec3 vW,vN;void main(){vW=aP;vN=aA;gl_Position=uM*vec4(aP,1.);}`;
+const VERT3=`attribute vec3 aP;attribute vec4 aA;attribute vec2 aQ;uniform mat4 uM;varying vec4 vA;varying vec2 vP;void main(){vA=aA;vP=aQ;gl_Position=uM*vec4(aP,1.);}`;
+const FRAG_T=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec3 vW,vN;uniform sampler2D uN;uniform vec3 uEye,uSun;
+vec4 nz(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return texture2D(uN,(i+f+.5)/256.);}
+void main(){
+  vec3 n=normalize(vN);
+  float n1=nz(vW.xz*.004).r,n2=nz(vW.xz*.021).g,n3=nz(vW.xz*.09).a;
+  // anything between the talus and the rim is cliff, whatever the coarse mesh says about its slope
+  float wall=smoothstep(0.,34.,vW.y-(176.+.11*abs(vW.x)))*(1.-smoothstep(940.,968.,vW.y));
+  float cl=max(wall,smoothstep(.3,.55,1.-n.y));
+  // the wall breaks into vertical facets: some face the sun, some turn away
+  float fac=nz(vec2(vW.x*.011+n1,2.)).r-.5+.5*(nz(vec2(vW.x*.045,9.)).g-.5);
+  vec3 nc=normalize(vec3(n.x*2.+fac*1.9,.12,-1.));
+  n=normalize(mix(n,nc,wall));
+  // sandstone: flat beds of orange, pink and grey, dark streaks where water runs, a wet wall beside the fall
+  float band=nz(vec2(vW.y*.02+n1*2.5,(vW.x+vW.z)*.0016)).r;
+  vec3 rock=mix(vec3(.86,.52,.29),vec3(.76,.58,.48),band);
+  rock=mix(rock,vec3(.56,.36,.28),.7*smoothstep(.55,.8,nz(vec2(vW.y*.045,vW.x*.002+7.)).g));
+  float wet=exp(-pow((vW.x-130.)/170.,2.))*smoothstep(170.,420.,vW.y);
+  rock=mix(rock,vec3(.25,.22,.28),wet*.85);
+  float streak=smoothstep(.6,.85,nz(vec2(vW.x*.05,vW.y*.0026)).b);
+  rock=mix(rock,rock*.55,streak*.45);
+  float led=smoothstep(.0,.08,fract(vW.y*.0105+n1*1.4))*(1.-smoothstep(.86,1.,fract(vW.y*.0105+n1*1.4)));
+  rock*=.72+.28*led;
+  rock=mix(rock,vec3(.30,.45,.24),(1.-led)*.5*step(.55,nz(vec2(vW.x*.02,floor(vW.y*.0105+n1*1.4))).a));
+  vec3 forest=mix(vec3(.10,.26,.13),vec3(.26,.47,.22),n2)*(.7+.6*n3);
+  vec3 scrub=mix(vec3(.33,.40,.25),vec3(.52,.48,.40),n2)*(.85+.3*n3);
+  vec3 col=mix(mix(forest,scrub,smoothstep(880.,935.,vW.y)),rock,cl);
+  col*=.4+.9*max(dot(n,uSun),0.)+.1*n.y;
+  float f=1.-exp(-length(vW-uEye)*.00011);
+  gl_FragColor=vec4(mix(col,vec3(.74,.84,.92),f*.62),1.);
+}`;
 const FRAG={
 tex:`uniform sampler2D uS;uniform float uO;void main(){gl_FragColor=texture2D(uS,vP/vec2(1000.,620.))*uO;}`,
 /* Falling water. Every parcel keeps the pattern it had when it left the lip, so the pattern travels down at
@@ -396,19 +434,19 @@ void main(){
   gl_FragColor=vec4(col*al,al);
 }`,
 /* Mist: the density a steady stream of growing puffs would leave behind, broken up by drifting noise. */
-mist:`uniform vec4 uB;uniform vec4 uV;uniform vec4 uM;uniform vec3 uCol,uSh;
+mist:`uniform vec4 uB;uniform vec4 uV;uniform vec4 uM4;uniform vec3 uCol,uSh;
 float sbox(vec2 p,vec2 c,vec2 hw,float r){vec2 q=abs(p-c)-hw;float dd=length(max(q,0.))+min(max(q.x,q.y),0.);return 1.-smoothstep(-r*.6,r,dd);}
 void main(){
   vec2 c=(uB.xy+uB.zw)*.5,hw=(uB.zw-uB.xy)*.5,vel=vec2(uV.x,-uV.y);
   float E=1.;
-  for(int i=0;i<6;i++){float k=(float(i)+.5)/6.;E*=1.-sin(3.14159*k)*sbox(vP,c+vel*uV.z*k,hw,uM.x*.5*(1.+uV.w*k));}
+  for(int i=0;i<6;i++){float k=(float(i)+.5)/6.;E*=1.-sin(3.14159*k)*sbox(vP,c+vel*uV.z*k,hw,uM4.x*.5*(1.+uV.w*k));}
   E=(1.-E)*.85;
   if(E<.003)discard;
-  vec2 q=(vP-vel*uT)/uM.x*2.4+uM.w;
+  vec2 q=(vP-vel*uT)/uM4.x*2.4+uM4.w;
   q+=.5*(nz(q*.6+vec2(uT*.031,-uT*.022)).rg-.5);
   float dn=fbm(q+vec2(0.,uT*.045));
   float m=E*(.22+1.6*dn);
-  float al=uM.y*uM.z*smoothstep(.03,.85,m);
+  float al=uM4.y*uM4.z*smoothstep(.03,.85,m);
   vec3 col=mix(uSh,uCol,smoothstep(.3,.72,dn+(E-.5)*.25));
   gl_FragColor=vec4(col*al,al);
 }`,
@@ -437,7 +475,7 @@ void main(){
 const GLR={ok:false,gl:null,prog:{},
   init(canvas){
     try{
-      const o={alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:true,powerPreference:'high-performance'};
+      const o={alpha:false,antialias:true,depth:true,stencil:false,premultipliedAlpha:true,powerPreference:'high-performance'};
       const gl=canvas.getContext('webgl',o)||canvas.getContext('experimental-webgl',o);if(!gl)return false;this.gl=gl;
       const sh=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
       const vs=sh(gl.VERTEX_SHADER,VERT);
@@ -445,6 +483,10 @@ const GLR={ok:false,gl:null,prog:{},
         gl.bindAttribLocation(p,0,'aP');gl.bindAttribLocation(p,1,'aA');gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
         const u={};const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const a=gl.getActiveUniform(p,i);u[a.name]=gl.getUniformLocation(p,a.name)}
         this.prog[k]={p,u}}
+      // 3D: terrain, and the same water and mist shaders fed from 3D ribbons
+      try{const mk=(v,f)=>{const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,v));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,f));gl.bindAttribLocation(p,0,'aP');gl.bindAttribLocation(p,1,'aA');gl.bindAttribLocation(p,2,'aQ');gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw 0;
+          const u={},n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const a=gl.getActiveUniform(p,i);u[a.name]=gl.getUniformLocation(p,a.name)}return {p,u}};
+        this.prog.terrain=mk(VERT_T,FRAG_T);this.prog.fall3=mk(VERT3,FRAG_HEAD+FRAG.fall);this.prog.mist3=mk(VERT3,FRAG_HEAD+FRAG.mist);this.has3d=true}catch(e3){this.has3d=false}
       const R=mulberry(77),px=new Uint8Array(256*256*4);for(let i=0;i<px.length;i++)px[i]=R()*256;
       this.noise=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,this.noise);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,256,256,0,gl.RGBA,gl.UNSIGNED_BYTE,px);
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
@@ -461,22 +503,38 @@ const GLR={ok:false,gl:null,prog:{},
       if(l.kind==='still'){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,l.cv);
         gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);l._t=t}
-      else if(isGL(l))l._b=this.buf(l.mesh())}
+      else if(l.kind==='world')this.prep3(l);else if(isGL(l))l._b=this.buf(l.mesh())}
   },
-  free(scene){const gl=this.gl;if(!gl)return;for(const l of scene.layers){if(l._t){gl.deleteTexture(l._t);l._t=null}if(l._b){gl.deleteBuffer(l._b.vbo);gl.deleteBuffer(l._b.ibo);l._b=null}}},
+  free(scene){const gl=this.gl;if(!gl)return;for(const l of scene.layers){if(l.kind==='world')this.free3(l);if(l._t){gl.deleteTexture(l._t);l._t=null}if(l._b){gl.deleteBuffer(l._b.vbo);gl.deleteBuffer(l._b.ibo);l._b=null}}},
   use(k,b,t){const gl=this.gl,pr=this.prog[k];gl.useProgram(pr.p);
     gl.bindBuffer(gl.ARRAY_BUFFER,b.vbo);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.ibo);
     gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(0,2,gl.FLOAT,false,24,0);gl.vertexAttribPointer(1,4,gl.FLOAT,false,24,8);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.noise);if(pr.u.uN)gl.uniform1i(pr.u.uN,0);if(pr.u.uT)gl.uniform1f(pr.u.uT,t);return pr.u},
-  render(scene,t){const gl=this.gl;gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);gl.clearColor(.03,.06,.065,1);gl.clear(gl.COLOR_BUFFER_BIT);
-    for(const l of scene.layers){
+  // one 3D object: vertices are position(3) + four values + two plane coordinates (terrain: position + normal)
+  buf3(m,stride){const gl=this.gl,b={vbo:gl.createBuffer(),ibo:gl.createBuffer(),n:m.ix.length,stride};gl.bindBuffer(gl.ARRAY_BUFFER,b.vbo);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(m.v),gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(m.ix),gl.STATIC_DRAW);return b},
+  prep3(w){w.tb=this.buf3(w.terrain,6);for(const o of w.water)o._b3=this.buf3(o.mesh3,9)},
+  free3(w){const gl=this.gl;if(!gl)return;for(const b of [w.tb,...w.water.map(o=>o._b3)])if(b){gl.deleteBuffer(b.vbo);gl.deleteBuffer(b.ibo)}},
+  draw3(w,t){const gl=this.gl,M=w.mvp;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.depthMask(true);gl.clear(gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);
+    let pr=this.prog.terrain;gl.useProgram(pr.p);gl.bindBuffer(gl.ARRAY_BUFFER,w.tb.vbo);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,w.tb.ibo);gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.disableVertexAttribArray(2);
+    gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,12);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.noise);gl.uniform1i(pr.u.uN,0);
+    gl.uniformMatrix4fv(pr.u.uM,false,M);gl.uniform3fv(pr.u.uEye,w.eye);gl.uniform3fv(pr.u.uSun,w.sun);gl.drawElements(gl.TRIANGLES,w.tb.n,gl.UNSIGNED_SHORT,0);
+    gl.enable(gl.BLEND);gl.depthMask(false);
+    for(const l of w.water){if(l.flow<.004)continue;pr=this.prog[l.kind==='fall'?'fall3':'mist3'];const u=pr.u,b=l._b3;gl.useProgram(pr.p);gl.bindBuffer(gl.ARRAY_BUFFER,b.vbo);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.ibo);
+      gl.enableVertexAttribArray(2);gl.vertexAttribPointer(0,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(1,4,gl.FLOAT,false,36,12);gl.vertexAttribPointer(2,2,gl.FLOAT,false,36,28);
+      gl.uniformMatrix4fv(u.uM,false,M);gl.uniform1i(u.uN,0);gl.uniform1f(u.uT,t);
+      if(l.kind==='fall'){gl.uniform4f(u.uK,l.g,Math.max(l.v0,.5),l.atom,l.foamAt);gl.uniform4f(u.uQ,l.flow,l.bodyA,Math.max(1,l.x1-l.x0),l.spread);gl.uniform4f(u.uL,l.fine,l.sway,l.seed,0);gl.uniform3fv(u.uBody,hex3(l.body));gl.uniform3fv(u.uFoam,hex3(l.foam));gl.uniform3fv(u.uShade,hex3(l.shade))}
+      else{gl.uniform4f(u.uB,l.x0,l.y0,l.x1,l.y1);gl.uniform4f(u.uV,l.drift,l.rise,l.life,l.grow);gl.uniform4f(u.uM4,l.size,l.op,l.flow,l.seed);gl.uniform3fv(u.uCol,hex3(l.col));gl.uniform3fv(u.uSh,hex3(l.sh))}
+      gl.drawElements(gl.TRIANGLES,b.n,gl.UNSIGNED_SHORT,0)}
+    gl.disableVertexAttribArray(2);gl.disable(gl.DEPTH_TEST);gl.depthMask(true)},
+  render(scene,t){const gl=this.gl;gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.clearColor(.03,.06,.065,1);gl.clear(gl.COLOR_BUFFER_BIT);
+    for(const l of scene.layers){if(l.kind==='world'){this.draw3(l,t);continue}
       if(l.kind==='still'){if(l.alpha<.004||!l._t)continue;const u=this.use('tex',this.quad,t);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,l._t);gl.uniform1i(u.uS,1);gl.uniform1f(u.uO,l.alpha);gl.drawElements(gl.TRIANGLES,6,gl.UNSIGNED_SHORT,0);continue}
       if(!l._b||l.flow<.004)continue;
       if(l.kind==='fall'){const u=this.use('fall',l._b,t);
         gl.uniform4f(u.uK,l.g,Math.max(l.v0,.5),l.atom,l.foamAt);gl.uniform4f(u.uQ,l.flow,l.bodyA,Math.max(1,l.x1-l.x0),l.spread);gl.uniform4f(u.uL,l.fine,l.sway,l.seed,0);
         gl.uniform3fv(u.uBody,hex3(l.body));gl.uniform3fv(u.uFoam,hex3(l.foam));gl.uniform3fv(u.uShade,hex3(l.shade))}
       else if(l.kind==='mist'){const u=this.use('mist',l._b,t);
-        gl.uniform4f(u.uB,l.x0,l.y0,l.x1,l.y1);gl.uniform4f(u.uV,l.drift,l.rise,l.life,l.grow);gl.uniform4f(u.uM,l.size,l.op,l.flow,l.seed);
+        gl.uniform4f(u.uB,l.x0,l.y0,l.x1,l.y1);gl.uniform4f(u.uV,l.drift,l.rise,l.life,l.grow);gl.uniform4f(u.uM4,l.size,l.op,l.flow,l.seed);
         gl.uniform3fv(u.uCol,hex3(l.col));gl.uniform3fv(u.uSh,hex3(l.sh))}
       else if(l.kind==='flow'){if(l.dyn)this.buf(l.mesh(),l._b);const u=this.use('flow',l._b,t),b=l.base;
         gl.uniform4f(u.uP,l.a,l.scale,l.edge[0],l.edge[1]);gl.uniform4f(u.uF,l.foam[0],l.foam[1],l.fade[0],l.fade[1]);
@@ -486,7 +544,7 @@ const GLR={ok:false,gl:null,prog:{},
   }
 };
 // layers the shaders can draw; anything else is drawn in 2D on the overlay canvas
-const isGL=l=>l.kind==='still'||l.kind==='fall'||l.kind==='mist'||(l.kind==='flow'&&!l.clip);
+const isGL=l=>l.kind==='world'||l.kind==='still'||l.kind==='fall'||l.kind==='mist'||(l.kind==='flow'&&!l.clip);
 
 /* ============================== DRAWING HELPERS ==============================
    Everything static is painted with these: gradients for light, tiled noise for rock and leaf texture,
@@ -1172,6 +1230,69 @@ guaira({bg,fg,R,still}){
   return {layers:L};
 },
 };
+
+/* ============================== 3D SCENES (stage B) ==============================
+   Where WebGL is available a waterfall listed here is drawn as a 3D model instead of its flat scene above.
+   Units are metres, y up, river level at 0. The terrain is modelled by eye from photographs, not from survey data. */
+const M4={
+  persp(fovy,asp,n,f){const t=1/Math.tan(fovy/2);return [-t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)/(n-f),-1, 0,0,2*f*n/(n-f),0]},
+  look(e,c,u){const z=M4.norm([e[0]-c[0],e[1]-c[1],e[2]-c[2]]),x=M4.norm(M4.cross(u,z)),y=M4.cross(z,x);
+    return [x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0, -M4.dot(x,e),-M4.dot(y,e),-M4.dot(z,e),1]},
+  mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];return o},
+  cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],norm(a){const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l]}
+};
+// smooth 2D noise for shaping terrain
+function noise2(seed){const R=mulberry(seed),g=new Float32Array(4096);for(let i=0;i<4096;i++)g[i]=R();
+  const v=(x,y)=>{const i=Math.floor(x),j=Math.floor(y),fx=smooth(x-i),fy=smooth(y-j),a=(p,q)=>g[((p&63)+((q&63)<<6))];return lerp(lerp(a(i,j),a(i+1,j),fx),lerp(a(i,j+1),a(i+1,j+1),fx),fy)};
+  return (x,y)=>(v(x,y)*.5+v(x*2.1+9,y*2.1+4)*.3+v(x*4.3+3,y*4.3+7)*.2)*2-1}
+// a ribbon of falling water in 3D: P(c,fr) gives the point at lateral position c (−1..1) and fraction fr of the way down
+function ribbon3(f,P,len){const N=clamp(Math.ceil((f.x1-f.x0)/6),2,24),M=28,v=[],ix=[],pad=1+(8+Math.abs(f.sway))/Math.max(2,(f.x1-f.x0)/2);
+  for(let j=0;j<=M;j++)for(let i=0;i<=N;i++){const fr=j/M,c=(2*i/N-1)*pad,p=P(c,fr);v.push(p[0],p[1],p[2],c,len*fr,len,0,0,0)}
+  for(let j=0;j<M;j++)for(let i=0;i<N;i++){const a=j*(N+1)+i,b=a+N+1;ix.push(a,a+1,b,a+1,b+1,b)}return {v,ix}}
+const SCENES3D={
+angel({bg,fg,R}){
+  const TOP=979,PL=TOP-807,nA=noise2(11),nB=noise2(29);
+  // the rim of the tepui: an amphitheatre with the fall at its back, the wall running on to both sides
+  const edge=x=>170*Math.exp(-Math.pow(x/430,2))+70*nA(x*.004,3)+45*Math.sin(x/260)+26*nA(x*.02,8);
+  const foot=x=>PL+.11*Math.abs(x-10)+46*(nA(x*.006,5)-nA(.06,5));
+  const hgt=(x,z)=>{const d=z-edge(x),top=TOP+12*nB(x*.006,z*.006)+16*nA(x*.03,1)*smooth(1-d/120)-7*Math.exp(-Math.pow(x/22,2))*smooth(1-d/200);
+    const gx=18+Math.max(0,-d)*.17,fr=Math.max(0,foot(x)+d*.3+26*nB(x*.008,z*.008)*smooth(-d/200)-38*Math.exp(-Math.pow((x-gx)/46,2))*smooth(-d/60));
+    const k=smooth((d+10)/16);return lerp(fr+6*nB(x*.03,z*.03),top,k)};
+  // height field: finer near the cliff, where the detail is
+  const N=180,v=[],ix=[],zs=u=>{const q=u*2-1;return -160+ (q<0?-1500*Math.pow(-q,1.6):1300*Math.pow(q,1.6))};
+  for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const x=-1900+3800*i/N,z=zs(j/N),e=7,y=hgt(x,z);
+    const n=M4.norm([hgt(x-e,z)-hgt(x+e,z),2*e,hgt(x,z-e)-hgt(x,z+e)]);v.push(x,y,z,n[0],n[1],n[2])}
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const a=j*(N+1)+i,b=a+N+1;ix.push(a,b,a+1,a+1,b,b+1)}
+  const zf=edge(0)-14;
+  // water: the plunge, the stream down the gully, and two bodies of mist; shader settings are in metres and seconds
+  const fall=new Fall(R,{x0:-7,x1:8,top:0,bot:807,n:0,g:G,v0:4,atom:.45,spread:34,wind:26,sway:16,body:'#f6fbfc',bodyA:.97,fine:.75});
+  fall.mesh3=ribbon3(fall,(c,fr)=>[.5+c*(7.5+fall.spread*fr)+fall.wind*fr*fr,TOP-807*fr,zf-26*fr],807);
+  const thin=new Fall(R,{x0:84,x1:89,top:0,bot:560,n:0,g:G,v0:4,atom:.3,spread:10,wind:16,sway:8,bodyA:.5,fine:1});
+  thin.mesh3=ribbon3(thin,(c,fr)=>[86+c*(2.5+thin.spread*fr)+thin.wind*fr*fr,TOP-30-560*fr,edge(86)-12-16*fr],560);
+  const gz=s=>zf-40-s*760,gxx=s=>18+(edge(18)-gz(s))*.17,stream=new Fall(R,{x0:-5,x1:5,top:0,bot:820,n:0,g:1.6,v0:9,bodyA:.9,fine:1.2});
+  stream.mesh3=ribbon3(stream,(c,fr)=>{const x=gxx(fr),z=gz(fr);return [x+c*5,hgt(x,z)+3,z]},820);
+  const mist3=(o,z)=>{const m=new Mist(R,o),q=m.mesh().v,vv=[];for(let i=0;i<4;i++){const x=q[i*6],Y=q[i*6+1];vv.push(x,TOP-Y,z,0,0,0,0,x,Y)}m.mesh3={v:vv,ix:[0,1,2,1,3,2]};return m};
+  const veil=mist3({x0:-40,x1:150,y0:300,y1:740,size:230,rise:-20,drift:18,life:9,grow:.8,op:.3},zf-30),spray=mist3({x0:-110,x1:200,y0:735,y1:830,size:210,rise:16,drift:18,life:7,op:.5},zf-70);
+  const world={kind:'world',terrain:{v,ix},water:[thin,fall,stream,veil,spray],sun:M4.norm([-.55,.62,-.56]),eye:[0,0,0],mvp:null,
+    update(dt,t){const a=.05+.21*Math.sin(t*.11),c=[30,490,edge(0)],r=2380;this.eye=[c[0]+r*Math.sin(a),440,c[2]-r*Math.cos(a)];
+      this.mvp=M4.mul(M4.persp(31*Math.PI/180,W/H,40,14000),M4.look(this.eye,c,[0,1,0]))},
+    at(x,y,z){const m=this.mvp,w=m[3]*x+m[7]*y+m[11]*z+m[15];return [((m[0]*x+m[4]*y+m[8]*z+m[12])/w*.5+.5)*W,(.5-(m[1]*x+m[5]*y+m[9]*z+m[13])/w*.5)*H]}};
+  world.update(0,0);
+  // sky, with far table mountains on the horizon
+  sky(bg,['#2f6fb5','#6fa5d8','#cfe2ee'],400);cloud(bg,R,880,96,300,86,.95);cloud(bg,R,140,150,220,50,.8);
+  const far=wave(R,5,70);
+  fill(bg,[[0,420],[0,318],[60,300],...curve(70,330,20,x=>296+far(x)),[350,318],[620,322],[650,300],...curve(660,1000,20,x=>294+far(x*1.3)),[1000,420]],grad(bg,0,290,0,420,['#86a5c6','#b7cfdf']));
+  const T=Math.sqrt(2*807/G);
+  // labels follow the model; every height is marked in the plane of the fall, where the scale is the same
+  const marks={draw(c,dt,t){
+      const a=world.at(-330,TOP,zf),b=world.at(-330,PL,zf);dimV(c,a[0],a[1],b[1],'807 m plunge',-1);
+      const p=world.at(340,TOP,zf),q=world.at(340,0,zf);dimV(c,p[0],p[1],q[1],'979 m in all',1);
+      const ex=760,ez=edge(760)-30,ey=hgt(760,ez),e0=world.at(ex,ey,ez),e1=world.at(ex,ey+330,ez);eiffel(c,e0[0],e0[1],e0[1]-e1[1]);txt(c,'Eiffel Tower, 330 m',e0[0],e0[1]+FS+6,'center');
+      const u=t%(T+2.2),k=Math.min(u,T),fr=.5*G*k*k/807,d=world.at(-60+26*fr*fr,TOP-807*fr,zf-26*fr);
+      c.fillStyle='rgba(6,16,18,.55)';c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.arc(d[0],d[1],5,0,7);c.fill();c.stroke();txt(c,`one drop: ${k.toFixed(1)} s`,d[0]-12,d[1],'right')}};
+  return {layers:[world,new Mist(R,{x0:-300,x1:700,y0:20,y1:80,n:9,size:230,rise:0,drift:10,a:.4,life:28,grow:.3,op:.36,sh:'#e4ebf2'}),marks]};
+},
+};
 /* ============================== APP ============================== */
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d'),glc=$('gl'),stage=$('stage');
@@ -1196,7 +1317,9 @@ function build(){
   const bg=mk(),fg=mk(),f=FALLS[cur];
   {const g=fg.createRadialGradient(W/2,H*.48,H*.42,W/2,H*.5,W*.66);g.addColorStop(0,'rgba(4,10,14,0)');g.addColorStop(1,'rgba(4,10,14,.34)');fg.fillStyle=g;fg.fillRect(0,0,W,H)} // soft vignette under the labels
   // still() gives a scene one more painted layer to place anywhere in its stack (rock or trees in front of water, say)
-  const out=SCENES[f.id]({bg,fg,R:mulberry(f.seed||7),still(){const x=mk();x.layer=new Still(x.canvas);return x}});
+  // stage B: a 3D model where there is one and the browser can draw it (?3d=0 keeps the flat drawing)
+  const use3d=GLR.ok&&GLR.has3d&&SCENES3D[f.id]&&!/[?&]3d=0\b/.test(location.search);stage.dataset.model=use3d?'3d':'flat';
+  const out=(use3d?SCENES3D:SCENES)[f.id]({bg,fg,R:mulberry(f.seed||7),still(){const x=mk();x.layer=new Still(x.canvas);return x}});
   scene={layers:[new Still(bg.canvas),...out.layers],fg:fg.canvas,dirty:true};
   scene.over=scene.layers.filter(l=>!isGL(l));
   if(GLR.ok){glc.width=pw;glc.height=ph;try{GLR.prep(scene)}catch(e){stopGL()}}
