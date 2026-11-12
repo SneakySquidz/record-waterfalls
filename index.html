@@ -855,36 +855,40 @@ niagara({bg,fg,R,still}){
   return {layers:L};
 },
 khone({bg,fg,R,still}){
-  // from the air: the Mekong, top to bottom, breaks over one long rock ledge between hundreds of islands
-  const fy=x=>345+18*Math.sin(x/90)+10*Math.sin(x/37+1);
-  bg.fillStyle=grad(bg,0,0,0,H,['#7f8f6a','#8a9670',[.55,'#93a07c'],'#6f8468']);bg.fillRect(0,0,W,H);
-  bg.save();tex(bg,'cloud',.12,3,5);bg.restore();
+  // from the air: the Mekong, top to bottom, breaks over one long ledge of bare rock between hundreds of islands
+  const fy=x=>330+18*Math.sin(x/90)+10*Math.sin(x/37+1);
+  bg.fillStyle=grad(bg,0,0,0,H,['#5f7f5c','#73906a',[.5,'#8aa27a'],[.62,'#a9bb98'],'#5d7c62']);bg.fillRect(0,0,W,H);
+  bg.save();tex(bg,'shade',.3,3,6);bg.restore();
   const cols=['#3f6f37','#4c7f40','#356030','#5a8c4a','#2f5a2e'];
-  // an island: pale sand and rock at the waterline, forest on top
-  const island=(c,x,y,w,h,rocky)=>{const n=9,P=[];for(let i=0;i<n;i++){const a=i/n*6.283,k=.75+R()*.4;P.push([x+Math.cos(a)*w/2*k,y+Math.sin(a)*h/2*k])}P.push(P[0],P[1]);
-    c.save();c.translate(1.5,3);fill(c,P,'rgba(20,40,30,.25)',{smooth:1,close:false});c.restore();
-    fill(c,P.map(([px,py])=>[x+(px-x)*1.12,y+(py-y)*1.08]),rocky?'#8a7a62':'#cbb98a',{smooth:1,close:false});
-    fill(c,P,cols[(R()*5)|0],{smooth:1,close:false});c.save();path(c,P,{smooth:1,close:false});c.clip();
-    for(let i=0;i<w*h/26;i++)crown(c,x+(R()-.5)*w,y+(R()-.5)*h,2+R()*2.6,cols[(R()*5)|0],.8);c.restore()};
-  for(let i=0;i<22;i++){const x=50+R()*900,y=40+R()*230;island(bg,x,y,16+R()*34,34+R()*90)}
-  const L=[new Flow(R,{x0:0,x1:W,y0:-10,y1:352,vx:0,vy:22,n:150,len:12,a:.4,col:'#eef0dc',foam:[0,.25],fade:[.6,1],edge:[0,0],scale:1.2,aniso:.5})];
-  // the ledge: bare brown rock between the channels
+  // an island: blunt upstream, drawn out to a sandy tail downstream, forest on top
+  const island=(c,x,y,w,h)=>{const P=[],n=12;for(let i=0;i<n;i++){const a=i/n*6.283,sy=Math.sin(a),k=.8+R()*.3,ry=sy>0?h*.62:h*.38,rx=w/2*(sy>0?1-.45*sy:1);P.push([x+Math.cos(a)*rx*k,y+sy*ry*k])}P.push(P[0],P[1]);
+    c.save();c.translate(2,3);fill(c,P,'rgba(16,36,28,.3)',{smooth:1,close:false});c.restore();
+    fill(c,P.map(([px,py])=>[x+(px-x)*1.14,y+(py-y)*(py>y?1.16:1.05)]),'#d2c296',{smooth:1,close:false});
+    fill(c,P,'#2c5a2e',{smooth:1,close:false});c.save();path(c,P,{smooth:1,close:false});c.clip();
+    for(let i=0;i<w*h/20;i++)crown(c,x+(R()-.5)*w,y+(R()-.45)*h*1.1,2+R()*2.8,cols[(R()*5)|0],.85);c.restore()};
+  for(let i=0;i<20;i++)island(bg,50+R()*900,30+R()*200,18+R()*34,40+R()*80);
+  const L=[new Flow(R,{x0:0,x1:W,y0:-10,y1:340,vx:0,vy:22,n:150,len:12,a:.42,col:'#eef2e0',foam:[0,.3],fade:[.5,1],edge:[0,0],scale:1.2,aniso:.5})];
+  // the ledge: angular slabs of brown and grey rock; every gap between them is a fall of two short steps
   let x=44,isl=R()<.5;const post=[],rocks=still();
-  while(x<956){const w=isl?26+R()*52:18+R()*44,xe=Math.min(956,x+w);
-    if(isl){const ym=fy((x+xe)/2);post.push([(x+xe)/2,ym-40-R()*90,xe-x+4,90+R()*150]);
-      rock(rocks,R,[[x-2,fy(x)-12],[(x+xe)/2,ym-18],[xe+2,fy(xe)-12],[xe+4,fy(xe)+30],[(x+xe)/2,ym+44],[x-4,fy(x)+30]],{smooth:1,c0:'#9a7f5c',c1:'#5f5246',t:{cloud:.2},strata:5,sl:30})}
-    else L.push(new Fall(R,{x0:x,x1:xe,top:fy,bot:q=>fy(q)+38,n:Math.round(8+(xe-x)*.7),g:260,v0:30,vmax:160,lw:1.5,streak:.12,body:'#c9d0b0',foam:'#fbfbf2',shade:'#c6cdbc',bodyA:.97,foamAt:.25,fine:1.4}));
+  const slab=(xa,xb)=>{const m=(xa+xb)/2,ya=fy(m),P=[[xa-1,ya-6-R()*8],[lerp(xa,xb,.3),ya-14-R()*10],[lerp(xa,xb,.7),ya-12-R()*10],[xb+1,ya-5-R()*8],[xb+2,ya+34+R()*8],[lerp(xa,xb,.6),ya+52+R()*14],[lerp(xa,xb,.3),ya+48+R()*12],[xa-2,ya+32+R()*8]];
+    rocks.save();rocks.translate(2,4);fill(rocks,P,'rgba(20,30,24,.35)');rocks.restore();
+    rock(rocks,R,P,{cols:[R()<.5?'#b08a5c':'#9c8468','#7d6a54','#5a5148'],t:{cloud:.16},joints:Math.round((xb-xa)/7),jl:34,strata:Math.round((xb-xa)/9),sl:26,dip:.3,lit:.7});
+    rocks.strokeStyle='rgba(255,240,214,.35)';rocks.lineWidth=1.5;path(rocks,P.slice(0,4),{close:false});rocks.stroke();
+    if(xb-xa>30)canopy(rocks,R,xa+6,xb-6,()=>ya-4,14,Math.round((xb-xa)/8),cols,2.5,4.5,.85)};
+  while(x<956){const w=isl?12+R()*30:16+R()*30,xe=Math.min(956,x+w);
+    if(isl){slab(x,xe);if(R()<.45)post.push([(x+xe)/2,fy((x+xe)/2)-60-R()*50,Math.max(14,xe-x-2),50+R()*60])}
+    else for(const [o,h] of [[0,24],[27,26]])L.push(new Fall(R,{x0:x-2,x1:xe+2,top:q=>fy(q)+o,bot:q=>fy(q)+o+h,n:Math.round(8+(xe-x)*.7),g:260,v0:30,vmax:160,lw:1.5,streak:.12,body:'#a9bb98',foam:'#fdfdf6',shade:'#9fb0a0',bodyA:.99,foamAt:.2,fine:1.5}));
     x=xe;isl=!isl}
-  L.push(new Flow(R,{x0:0,x1:W,y0:376,y1:H+10,vx:0,vy:46,n:170,len:18,a:.8,col:'#f6f6ea',foam:[.8,.12],fade:[1,.6],edge:[0,0],scale:.9,aniso:.45,streaks:.3}));
+  L.push(new Flow(R,{x0:0,x1:W,y0:356,y1:H+40,vx:0,vy:50,n:170,len:18,a:.9,col:'#f8f8ee',foam:[.95,.05],fade:[1,.6],edge:[0,.06],scale:.9,aniso:.45,streaks:.3}));
   L.push(rocks.layer);
-  L.push(new Mist(R,{x0:40,x1:960,y0:378,y1:396,n:46,size:46,rise:3,drift:0,a:.3,life:4,op:.5}));
+  L.push(new Mist(R,{x0:40,x1:960,y0:372,y1:398,n:46,size:50,rise:3,drift:0,a:.3,life:4,op:.22}));
   const top=still();
-  post.forEach(([px,py,w,h])=>island(top,px,py+h/2-30,w,h,1));
-  for(let i=0;i<11;i++){const px=60+R()*880,py=440+R()*120;island(top,px,py,10+R()*18,20+R()*44)}
-  // the two banks: forest, with a strip of fields on the left
+  post.forEach(([px,py,w,h])=>island(top,px,py,w,h));
+  for(let i=0;i<9;i++)island(top,60+R()*880,470+R()*90,10+R()*16,22+R()*40);
+  // the two banks: forest down to a sandy shore
   for(const o of [0,W]){const d=o?-1:1,e=y=>o+d*(34+10*Math.sin(y/70)+6*Math.sin(y/23));const P=[];for(let y=-10;y<=H+10;y+=20)P.push([e(y),y]);
-    fill(top,[[o,-10],...P,[o,H+10]],'#cbb98a',{smooth:1});fill(top,[[o,-10],...P.map(([px,py])=>[px-d*4,py]),[o,H+10]],'#3a6a34',{smooth:1});
-    for(let i=0;i<260;i++){const yy=R()*H,xx=o+d*R()*(Math.abs(e(yy)-o)-5);crown(top,xx,yy,2.4+R()*3,cols[(R()*5)|0],.8)}}
+    fill(top,[[o,-10],...P,[o,H+10]],'#d2c296',{smooth:1});fill(top,[[o,-10],...P.map(([px,py])=>[px-d*4,py]),[o,H+10]],'#2c5a2e',{smooth:1});
+    for(let i=0;i<300;i++){const yy=R()*H,xx=o+d*R()*(Math.abs(e(yy)-o)-5);crown(top,xx,yy,2.4+R()*3,cols[(R()*5)|0],.85)}}
   L.push(top.layer);
   dimH(fg,44,956,H-58,'10,783 m from bank to bank, seen from the air');
   txt(fg,'the drop itself is only about 21 m',W/2,H-30,'center');
@@ -963,20 +967,23 @@ kaieteur({bg,fg,R,still}){
 },
 dettifoss({bg,fg,R,still}){
   // looking up the canyon: grey meltwater over a ledge of columnar basalt, bare rock on one bank and moss on the other
-  const s=5,x0=250,x1=750,top=x=>236+(x-x0)*.09,bot=x=>top(x)+44*s;
-  sky(bg,['#6f8296','#a9b7c2','#dcdfdc'],190);
-  cloud(bg,R,240,84,420,56,.8,'#f1f1ee','#a9b0b6');cloud(bg,R,790,112,380,50,.75,'#eeeeea','#a3abb2');cloud(bg,R,560,44,260,30,.5,'#ffffff','#b3bac0');
+  const s=5,x0=250,x1=750,top=x=>236+(x-x0)*.09,bot=x=>top(x)+44*s,lip=x=>top(x)+2.5*Math.sin(x/19)+1.5*Math.sin(x/7+1);
+  sky(bg,['#566a80','#93a3b0','#e2e2da'],190);
+  cloud(bg,R,210,92,460,66,.9,'#e9eaea','#8d98a4');cloud(bg,R,800,118,420,58,.85,'#e4e6e6','#87929e');cloud(bg,R,540,52,300,36,.7,'#f4f4f2','#a3adb6');
   // the stony plateau behind, with a low line of basalt steps
   const far=wave(R,5,90);
   fill(bg,[[0,190],...curve(0,1000,20,x=>168+far(x)),[1000,190],[1000,260],[0,260]],grad(bg,0,160,0,250,['#77726a','#5f5b55']));
+  // a low wall of basalt across the plateau, as behind the real falls
+  cliff(bg,R,{x0:0,x1:1000,top:x=>160+far(x*1.3)*.7,bot:()=>180,w:[6,22],jag:3,lit:['#5d5a55','#45433f'],dark:['#33322f','#232221'],vary:.6,ledges:0});
+  fill(bg,[[0,178],[1000,178],[1000,196],[0,196]],grad(bg,0,178,0,196,['#4f4b45','#6a655d']));
   // the river arriving: grey-brown, already breaking
-  fill(bg,[[330,186],[640,186],[x1,top(x1)],[x0,top(x0)]],grad(bg,0,186,0,280,['#8f897c','#7a7466']));
+  fill(bg,[[300,184],[690,184],[x1,top(x1)],[x0,top(x0)]],grad(bg,0,184,0,280,['#a39d90','#8a8476']));
   // the banks, seen from above the rim: moss where the spray lands (west), bare stone and boulders (east)
   const rimL=x=>top(x0)+(x0-x)*.26+far(x*2)*.4,rimR=x=>top(x1)+(x-x1)*.26+far(x*2)*.4;
-  fill(bg,[[0,192],[330,186],[x0,top(x0)],...curve(0,x0,25,rimL).reverse()],grad(bg,0,186,0,300,['#6f7a4c','#8f9e4a','#a3ae4e']));
-  fill(bg,[[640,186],[1000,194],...curve(x1,1000,25,rimR).reverse()],grad(bg,0,186,0,340,['#6c6861','#5d5952','#514d47']));
-  bg.save();path(bg,[[0,192],[330,186],[x0,top(x0)],...curve(0,x0,25,rimL).reverse()]);bg.clip();tex(bg,'cloud',.3,1.1,.6);for(let i=0;i<50;i++){const x=R()*x0,y=195+R()*100,r=2+R()*5;bg.fillStyle=R()<.5?'#4a4843':'#6f6b64';bg.beginPath();bg.ellipse(x,y,r*1.5,r*.8,0,0,7);bg.fill()}bg.restore();
-  bg.save();path(bg,[[640,186],[1000,194],...curve(x1,1000,25,rimR).reverse()]);bg.clip();for(let i=0;i<150;i++){const x=640+R()*360,y=190+R()*150,r=(1.5+R()*5)*(.5+(y-190)/150);bg.fillStyle=R()<.5?'#3f3d3a':'#85807a';bg.beginPath();bg.ellipse(x,y,r*1.5,r*.8,0,0,7);bg.fill()}bg.restore();
+  fill(bg,[[0,192],[300,184],[x0,top(x0)],...curve(0,x0,25,rimL).reverse()],grad(bg,0,186,0,300,['#6f7a4c','#8f9e4a','#a3ae4e']));
+  fill(bg,[[690,184],[1000,194],...curve(x1,1000,25,rimR).reverse()],grad(bg,0,186,0,340,['#6c6861','#5d5952','#514d47']));
+  bg.save();path(bg,[[0,192],[300,184],[x0,top(x0)],...curve(0,x0,25,rimL).reverse()]);bg.clip();tex(bg,'cloud',.3,1.1,.6);for(let i=0;i<50;i++){const x=R()*x0,y=195+R()*100,r=2+R()*5;bg.fillStyle=R()<.5?'#4a4843':'#6f6b64';bg.beginPath();bg.ellipse(x,y,r*1.5,r*.8,0,0,7);bg.fill()}bg.restore();
+  bg.save();path(bg,[[690,184],[1000,194],...curve(x1,1000,25,rimR).reverse()]);bg.clip();for(let i=0;i<150;i++){const x=640+R()*360,y=190+R()*150,r=(1.5+R()*5)*(.5+(y-190)/150);bg.fillStyle=R()<.5?'#3f3d3a':'#85807a';bg.beginPath();bg.ellipse(x,y,r*1.5,r*.8,0,0,7);bg.fill()}bg.restore();
   // canyon walls: two tiers of basalt columns with a band of rubble between the flows
   for(const d of [-1,1]){const a=d<0?0:x1,b=d<0?x0:1000,rm=d<0?rimL:rimR,e=d<0?x0:x1,sh=x=>(d<0?.3:.55)+.25*Math.abs(x-e)/260;
     cliff(bg,R,{x0:a,x1:b,top:rm,bot:x=>rm(x)+96,w:[5,24],jag:6,lit:['#6a6763','#4a4947'],dark:['#333335','#1c1d1f'],shade:sh,vary:.5,ledges:0,t:{cloud:.07}});
@@ -985,13 +992,25 @@ dettifoss({bg,fg,R,still}){
     bg.fillStyle=grad(bg,e,0,e-d*150,0,['rgba(225,222,212,.16)','rgba(225,222,212,0)']);bg.fillRect(Math.min(e,e-d*150),230,150,H-230)}
   // rock behind the curtain and the churned floor of the canyon
   rock(bg,R,[[x0,top(x0)],[x1,top(x1)],[x1,H],[x0,H]],{c0:'#2c2d2f',c1:'#151617',joints:50});
-  fill(bg,[[x0+6,bot(x0)-30],[x1-6,bot(x1)-30],[x1+70,H],[x0-70,H]],grad(bg,0,440,0,H,['#9a9486','#6f695d','#544f46']));
+  fill(bg,[[x0+6,bot(x0)-30],[x1-6,bot(x1)-30],[x1+70,H],[x0-70,H]],grad(bg,0,440,0,H,['#b3ad9f','#7d776a','#5a554b']));
   const L=[
-    new Flow(R,{A:u=>[lerp(330,640,u),186],B:u=>[lerp(x0,x1,u),top(lerp(x0,x1,u))+1],cols:20,rows:5,uw:500,vl:320,vel:[0,90],n:60,len:12,a:.8,col:'#efe9dc',foam:[.1,.5],fade:[.5,1],edge:[.02,0],scale:1.2,aniso:.5}),
-    new Fall(R,{x0,x1,top,bot,n:560,g:G*s,v0:40,vmax:260,lw:1.8,streak:.1,minLen:8,body:'#6f6858',foam:'#e2dccd',shade:'#8f897c',col:'#f0eadc',bodyA:.99,foamAt:.3,fine:.8}),
-    new Flow(R,{A:u=>[lerp(x0-10,x1+10,u),bot(lerp(x0,x1,u))-26],B:u=>[lerp(x0-70,x1+70,u),H+6],cols:16,rows:4,uw:520,vl:200,vel:[14,46],n:80,len:16,a:.85,col:'#f0eadc',foam:[.75,.3],edge:[.03,0],scale:.8,aniso:.4,streaks:.2}),
-    new Mist(R,{x0:270,x1:730,y0:420,y1:520,n:80,size:180,rise:48,drift:28,a:.15,life:6,grow:1.5,col:'#eeeae0',sh:'#b9b6ae',op:.42}),
+    new Flow(R,{A:u=>[lerp(300,690,u),184],B:u=>[lerp(x0,x1,u),top(lerp(x0,x1,u))+3],cols:20,rows:5,uw:500,vl:320,vel:[0,90],n:60,len:12,a:.8,col:'#efe9dc',foam:[.1,.5],fade:[.5,1],edge:[.02,0],scale:1.2,aniso:.5}),
+    new Fall(R,{x0,x1,top:lip,bot,n:560,g:G*s,v0:40,vmax:260,lw:1.8,streak:.1,minLen:8,body:'#a59f90',foam:'#f4f1e9',shade:'#8d8a84',col:'#f6f2e8',bodyA:1,foamAt:.16,fine:.55}),
+    new Flow(R,{A:u=>[lerp(x0-10,x1+10,u),bot(lerp(x0,x1,u))-26],B:u=>[lerp(x0-70,x1+70,u),H+6],cols:16,rows:4,uw:520,vl:200,vel:[14,46],n:80,len:16,a:.85,col:'#f0eadc',foam:[.9,.4],edge:[.03,0],scale:.8,aniso:.4,streaks:.2}),
+    new Mist(R,{x0:270,x1:730,y0:420,y1:520,n:80,size:180,rise:48,drift:28,a:.15,life:6,grow:1.5,col:'#f1eee6',sh:'#c3c0b8',op:.55}),
   ];
+  // talus at the foot of each wall, a rainbow in the spray, and the mossy west bank in front of us
+  const near=still();
+  for(const dd of [-1,1]){const e=dd<0?x0-66:x1+66;fill(near,[[e-dd*10,H],[e+dd*14,H-70],[e+dd*60,H-104],[e+dd*130,H-80],[e+dd*210,H]],grad(near,0,H-110,0,H,['#3a3938','#1c1c1d']),{smooth:1});
+    for(let i=0;i<40;i++){const x=e+dd*(10+R()*170),y=H-6-R()*80*(1-Math.abs(x-e-dd*70)/150),r=2+R()*5;near.fillStyle=R()<.5?'#55534f':'#262626';near.beginPath();near.ellipse(x,y,r*1.4,r,0,0,7);near.fill()}}
+  near.lineWidth=4;['#e2504a','#eea13c','#e9dc55','#63bf6b','#4a8fd6','#8a62c4'].forEach((c,i)=>{near.strokeStyle=rgba(c,.3);near.beginPath();near.arc(520,620,250-i*4,Math.PI*1.18,Math.PI*1.62);near.stroke()});
+  const moss=x=>470+Math.pow(x/340,1.8)*160+far(x*3)*.8;
+  fill(near,[[0,H],...curve(0,340,12,moss),[340,H]],grad(near,0,460,0,H,['#9ab23e','#7a9a34','#4f7028']));
+  near.save();path(near,[[0,H],...curve(0,340,12,moss),[340,H]]);near.clip();tex(near,'cloud',.3,.9,.5);
+  for(let i=0;i<500;i++){const gx=R()*340,gy=moss(gx)+R()*150;near.strokeStyle=R()<.5?'rgba(214,228,120,.5)':'rgba(40,70,24,.5)';near.lineWidth=1.1;near.beginPath();near.moveTo(gx,gy);near.lineTo(gx+(R()-.5)*5,gy-4-R()*7);near.stroke()}
+  for(let i=0;i<12;i++){const x=R()*300,y=moss(x)+10+R()*90,r=4+R()*9;near.fillStyle='#3d3c3a';near.beginPath();near.ellipse(x,y,r*1.5,r*.8,0,0,7);near.fill();near.fillStyle='rgba(150,170,60,.8)';near.beginPath();near.ellipse(x-r*.2,y-r*.45,r*1.1,r*.35,0,0,7);near.fill()}
+  near.restore();
+  L.push(near.layer);
   // spray carried over the east rim by the wind
   L.push(new Mist(R,{x0:560,x1:760,y0:230,y1:330,n:30,size:200,rise:30,drift:44,a:.2,life:7,grow:1.4,col:'#eeeae0',sh:'#c3c0b8',op:.18}));
   // people on the east rim, to scale (1.7 m)
