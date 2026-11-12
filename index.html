@@ -171,13 +171,13 @@ const FALLS=[
  blurb:'Water leaves the flat top of a sandstone table mountain and falls 807 m without touching rock. The drop is so long that much of the stream turns to mist before it reaches the ground.',
  height:979,drop:807,width:150,widthNote:'at the base, one source',flow:null,flowNote:'no sourced figure',status:'solid',
  claim:'The 807 m plunge is the tallest uninterrupted drop on record. The 979 m total comes from a 1949 survey taken about 2 km away, and the World Waterfall Database questions it.',
- anim:'Drawn to scale against the Eiffel Tower. The water falls at real free-fall speed, so the stream takes about 13 seconds to come down and fades into spray on the way.',
+ anim:'The 807 m plunge and the 979 m total are to scale against the Eiffel Tower. The water falls at real free-fall speed, so the stream takes about 13 seconds to come down and fades into spray on the way; the marker follows one drop. The cliff, the thin second fall, the lower cascades and the forest are drawn by eye from photographs.',
  src:[['Britannica','https://www.britannica.com/place/Angel-Falls'],['World Waterfall Database','https://www.worldwaterfalldatabase.com/waterfall/Kerepakupai-Meru-1']]},
 {id:'tugela',seed:23,name:'Tugela Falls',short:'Tugela Falls',tag:'Rival for tallest on Earth',place:'Drakensberg Amphitheatre, South Africa',
  blurb:'A thin stream steps down the basalt wall of the Amphitheatre in five leaps. It drains a very small catchment, so it is often a trickle and sometimes dry.',
  height:948,heightNote:'983 m in a 2016 Czech survey',drop:411,width:null,flow:null,flowNote:'no sourced figure; often near dry',status:'disputed',
  claim:'At 948 m it ranks second. A 2016 measurement gave 983 m, taller than Angel Falls, but it was taken from over a kilometre away and has not been confirmed. Which of the two is taller is still open.',
- anim:'Total height and the 411 m tier are to scale against the Eiffel Tower. The first tier is drawn at about 180 m; the three lower tiers have no published heights, so they share the remainder equally.',
+ anim:'Total height and the 411 m tier are to scale against the Eiffel Tower. The first tier is drawn at about 180 m; the three lower tiers have no published heights, so they share the remainder equally. The basalt wall, its grass ledges, the pinnacle and the slopes below are drawn by eye from photographs.',
  src:[['World Waterfall Database','https://www.worldwaterfalldatabase.com/waterfall/Tugela-Falls-2'],['Wikipedia','https://en.wikipedia.org/wiki/Tugela_Falls']]},
 {id:'victoria',seed:5,name:'Victoria Falls',short:'Victoria Falls',tag:'Largest sheet of falling water',place:'Mosi-oa-Tunya · Zambezi River, Zambia and Zimbabwe',
  blurb:'The whole Zambezi, 1.7 km wide, drops at once into a narrow crack in the basalt. The spray rises about 500 m at its highest and can be seen from 50 km away, hence the local name, "the smoke that thunders".',
@@ -225,13 +225,13 @@ const FALLS=[
  blurb:'Three sections down a granite wall, 739 m in all. It is fed only by snowmelt: it peaks in May and is often a trickle or completely dry by August.',
  height:739,drop:436,width:null,flow:null,flowNote:'no official figure',status:'solid',
  claim:'The tallest waterfall in Yosemite National Park, not a world record. It is here for its seasons. Section heights are from the US National Park Service.',
- anim:'The three sections are to scale. The flow runs through the year, about two seconds a month. The shape of the yearly curve is drawn by eye from the park\'s description, not from gauge data.',
+ anim:'The three sections are to scale. The flow runs through the year, about two seconds a month. The shape of the yearly curve is drawn by eye from the park\'s description, not from gauge data. The granite wall, the winter snow and the summer colour of the meadow are also drawn by eye, from photographs.',
  src:[['US National Park Service','https://www.nps.gov/yose/planyourvisit/waterfalls.htm']]},
 {id:'denmark',seed:37,name:'Denmark Strait Cataract',short:'Denmark Strait',tag:'Largest of all, under the sea',place:'Sea floor between Greenland and Iceland',
  blurb:'Cold, dense water from the Nordic Seas spills over an undersea ridge and sinks under the warmer Atlantic, sliding about 3,500 m down the sea floor. It carries around 3.5 million m³ a second, over a thousand times Niagara.',
  height:3500,heightNote:'descent along a slope',drop:null,width:null,flow:3500000,status:'disputed',
  claim:'NOAA calls it the largest waterfall on Earth. It is a density current flowing down a slope over a long distance, not a free fall, and many do not count undersea overflows as waterfalls. Flow estimates run from 3.2 to 3.5 million m³/s.',
- anim:'A cross-section through the sea. Depths are to scale, with Angel Falls marked for comparison; the horizontal distance is compressed enormously, so the real slope is far gentler.',
+ anim:'A cross-section through the sea. Depths are to scale, with Angel Falls marked for comparison; the horizontal distance is compressed enormously, so the real slope is far gentler. The speed and thickness of the cold current, the shape of the sea floor, the icebergs and the ship are drawn by eye.',
  src:[['NOAA','https://oceanservice.noaa.gov/facts/largest-waterfall.html'],['Wikipedia','https://en.wikipedia.org/wiki/Denmark_Strait_overflow']]},
 {id:'guaira',seed:19,name:'Guaíra Falls',short:'Guaíra Falls',tag:'The record that drowned',place:'Sete Quedas · Paraná River, Brazil and Paraguay',
  blurb:'Eighteen cataracts in seven groups, carrying about 13,000 m³/s, more than five times Niagara. In October 1982 the reservoir behind the Itaipu dam rose over them in 14 days.',
@@ -325,7 +325,7 @@ class Mist{
 /* Moving water seen from above or along its surface: a river, rapids, a pool, a current. The surface is a band
    P(s,t), s across (0..1) and t along (0..1); by default a plain rectangle x0..x1, y0..y1. vel is in scene units a second. */
 class Flow{
-  constructor(R,o){Object.assign(this,{kind:'flow',n:60,vx:0,vy:20,col:'#ffffff',len:12,lw:1.4,a:.5,clip:null,scale:1,foam:[0,0],fade:[1,1],edge:[.03,.05],mode:0,rim:0,base:null,cols:24,rows:6,dyn:false,seed:R()*40},o);this.R=R;
+  constructor(R,o){Object.assign(this,{kind:'flow',n:60,vx:0,vy:20,col:'#ffffff',len:12,lw:1.4,a:.5,clip:null,under:null,scale:1,foam:[0,0],fade:[1,1],edge:[.03,.05],mode:0,rim:0,base:null,cols:24,rows:6,dyn:false,seed:R()*40},o);this.R=R;
     if(!this.P){if(this.A){const A=this.A,B=this.B;this.P=(s,t)=>{const a=A(s),b=B(s);return [lerp(a[0],b[0],t),lerp(a[1],b[1],t)]}}
       else{this.P=(s,t)=>[lerp(this.x0,this.x1,s),lerp(this.y0,this.y1,t)];this.cols=this.rows=1}}
     const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1])||1;
@@ -335,6 +335,7 @@ class Flow{
   outline(c){const n=Math.max(2,this.cols);c.beginPath();for(let i=0;i<=n;i++){const q=this.P(i/n,0);i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1])}for(let i=n;i>=0;i--){const q=this.P(i/n,1);c.lineTo(q[0],q[1])}c.closePath()}
   // 2D fallback: streaks sliding along the band
   draw(c,dt){const sp=Math.hypot(this.vel[0],this.vel[1])||1,du=this.vel[0]/sp*this.len/this.uw,dv=this.vel[1]/sp*this.len/this.vl;c.save();if(this.clip){c.beginPath();this.clip(c);c.clip()}
+    if(this.under){this.outline(c);c.fillStyle=rgba(this.under[0],this.under[1]);c.fill()}
     if(this.base){this.outline(c);const a=this.P(.5,0),b=this.P(.5,1),g=c.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,rgba(this.base[0][0],this.base[0][1]));g.addColorStop(1,rgba(this.base[1][0],this.base[1][1]));c.fillStyle=g;c.fill()}
     c.strokeStyle=this.col;c.lineWidth=this.lw;c.lineCap='round';
     for(const p of this.p){p.s+=this.vel[0]/this.uw*p.sp*dt;p.t+=this.vel[1]/this.vl*p.sp*dt;p.s-=Math.floor(p.s);p.t-=Math.floor(p.t);
@@ -487,89 +488,280 @@ const GLR={ok:false,gl:null,prog:{},
 // layers the shaders can draw; anything else is drawn in 2D on the overlay canvas
 const isGL=l=>l.kind==='still'||l.kind==='fall'||l.kind==='mist'||(l.kind==='flow'&&!l.clip);
 
-/* ============================== DRAWING HELPERS ============================== */
-function sky(c,a,b,y1=H){const g=c.createLinearGradient(0,0,0,y1);g.addColorStop(0,a);g.addColorStop(1,b);c.fillStyle=g;c.fillRect(0,0,W,H)}
-function poly(c,pts,fill){c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fillStyle=fill;c.fill()}
-function rock(c,R,pts,c0,c1,o={}){
+/* ============================== DRAWING HELPERS ==============================
+   Everything static is painted with these: gradients for light, tiled noise for rock and leaf texture,
+   and seeded random detail, so a scene looks the same every time it is opened. */
+const mix=(a,b,k)=>{const A=hex3(a),B=hex3(b);return '#'+A.map((v,i)=>Math.round(255*lerp(v,B[i],k)).toString(16).padStart(2,'0')).join('')};
+// a smooth 1D wobble for natural edges: cliff tops, tree lines, river banks
+function wave(R,amp,len,oct=3){const ph=[];for(let i=0;i<oct;i++)ph.push(R()*6.28,.8+R()*.4);return x=>{let s=0;for(let i=0;i<oct;i++)s+=amp/(1<<i)*Math.sin(x/(len*ph[i*2+1]/(1<<i))+ph[i*2]);return s}}
+// a smooth line through points, as a function of x
+function spline(P){return x=>{let i=1;while(i<P.length-1&&x>P[i][0])i++;const p0=P[Math.max(0,i-2)],p1=P[i-1],p2=P[i],p3=P[Math.min(P.length-1,i+1)],d=p2[0]-p1[0],t=clamp((x-p1[0])/d,0,1),m1=(p2[1]-p0[1])/(p2[0]-p0[0])*d,m2=(p3[1]-p1[1])/(p3[0]-p1[0])*d,t2=t*t,t3=t2*t;return (2*t3-3*t2+1)*p1[1]+(t3-2*t2+t)*m1+(3*t2-2*t3)*p2[1]+(t3-t2)*m2}}
+const curve=(x0,x1,step,f)=>{const p=[];for(let x=x0;x<x1;x+=step)p.push([x,f(x)]);p.push([x1,f(x1)]);return p};
+function path(c,pts,o={}){c.beginPath();const n=pts.length;
+  if(o.smooth&&n>2){c.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<n-1;i++)c.quadraticCurveTo(pts[i][0],pts[i][1],(pts[i][0]+pts[i+1][0])/2,(pts[i][1]+pts[i+1][1])/2);c.lineTo(pts[n-1][0],pts[n-1][1])}
+  else pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));
+  if(o.close!==false)c.closePath()}
+function grad(c,x0,y0,x1,y1,cols){const g=c.createLinearGradient(x0,y0,x1,y1);cols.forEach((s,i)=>Array.isArray(s)?g.addColorStop(s[0],s[1]):g.addColorStop(cols.length>1?i/(cols.length-1):0,s));return g}
+function fill(c,pts,style,o){path(c,pts,o);c.fillStyle=style;c.fill()}
+function sky(c,cols,y1=H){c.fillStyle=grad(c,0,0,0,y1,cols);c.fillRect(0,0,W,H)}
+function glow(c,x,y,r,col,a){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,rgba(col,a));g.addColorStop(1,rgba(col,0));c.fillStyle=g;c.fillRect(x-r,y-r,2*r,2*r)}
+function haze(c,y0,y1,col,a0,a1=0){c.fillStyle=grad(c,0,y0,0,y1,[rgba(col,a0),rgba(col,a1)]);c.fillRect(0,Math.min(y0,y1),W,Math.abs(y1-y0))}
+
+// tiled noise: dark where the noise is low, light where it is high, so one pass both shades and highlights
+const TILES={};
+function tile(kind){if(TILES[kind])return TILES[kind];
+  const n=256,cv=document.createElement('canvas');cv.width=cv.height=n;const x=cv.getContext('2d'),im=x.createImageData(n,n),R=mulberry(kind.charCodeAt(0)*131+kind.length);
+  const oct={cloud:[[4,4,1],[8,8,.5],[16,16,.25],[32,32,.12]],shade:[[4,4,1],[8,8,.5],[16,16,.25],[32,32,.12]],strata:[[2,20,1],[5,44,.6],[10,90,.35]],joint:[[20,2,1],[44,5,.6],[90,10,.35]],grain:[[48,48,.5],[128,128,1]]}[kind];
+  const f=new Float32Array(n*n);let tot=0;
+  for(const [cx,cy,wt] of oct){const g=new Float32Array(cx*cy);for(let i=0;i<g.length;i++)g[i]=R();tot+=wt;
+    for(let j=0;j<n;j++){const v=j/n*cy,j0=Math.floor(v),fy=smooth(v-j0),ja=j0%cy,jb=(j0+1)%cy;
+      for(let i=0;i<n;i++){const u=i/n*cx,i0=Math.floor(u),fx=smooth(u-i0),ia=i0%cx,ib=(i0+1)%cx;
+        f[j*n+i]+=wt*lerp(lerp(g[ja*cx+ia],g[ja*cx+ib],fx),lerp(g[jb*cx+ia],g[jb*cx+ib],fx),fy)}}}
+  for(let i=0;i<n*n;i++){const v=clamp((f[i]/tot-.5)*2.4,-1,1),k=i*4,w=v>0?255:0;im.data[k]=im.data[k+1]=im.data[k+2]=w;im.data[k+3]=kind==='shade'?Math.max(0,-v)*255:Math.abs(v)*255}
+  x.putImageData(im,0,0);return TILES[kind]=cv}
+// texture whatever is inside the current clip
+function tex(c,kind,a,sx=1,sy=sx){c.save();c.globalAlpha=a;c.scale(sx,sy);c.fillStyle=c.createPattern(tile(kind),'repeat');c.fillRect(0,0,W/sx+1,H/sy+1);c.restore()}
+
+/* A rock face: gradient for the light, tiled noise for the grain, then bedding lines and joints.
+   o: c0,c1 top and bottom colour (or cols: gradient stops); smooth; strata, joints: counts; dip: slope of the beds;
+   t: {strata,joint,cloud,grain} texture strengths; ts: texture size; lit: >0 lights the left side, <0 the right */
+function rock(c,R,pts,o={}){
   let y0=1e9,y1=-1e9,x0=1e9,x1=-1e9;pts.forEach(p=>{y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0])});
-  const g=c.createLinearGradient(0,y0,0,y1);g.addColorStop(0,c0);g.addColorStop(1,c1);poly(c,pts,g);
-  c.save();c.clip();
-  for(let i=0;i<(o.strata||0);i++){const y=y0+R()*(y1-y0),x=x0+R()*(x1-x0),l=40+R()*200;c.strokeStyle=R()<.5?'rgba(0,0,0,.16)':'rgba(255,255,255,.10)';c.lineWidth=1+R()*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+l,y+(R()-.5)*5);c.stroke()}
-  for(let i=0;i<(o.joints||0);i++){const x=x0+R()*(x1-x0),y=y0+R()*(y1-y0),l=30+R()*140;c.strokeStyle=R()<.6?'rgba(0,0,0,.22)':'rgba(255,255,255,.08)';c.lineWidth=1+R()*1.5;c.beginPath();c.moveTo(x,y);c.lineTo(x+(R()-.5)*4,y+l);c.stroke()}
-  c.restore();
-}
-function ridge(c,R,y,amp,col,step=36){c.beginPath();c.moveTo(0,H);for(let x=0;x<=W+step;x+=step)c.lineTo(x,y+(R()-.5)*amp);c.lineTo(W,H);c.closePath();c.fillStyle=col;c.fill()}
-function canopy(c,R,x0,x1,yf,spread,n,cols,r0=7,r1=17){for(let i=0;i<n;i++){const x=x0+R()*(x1-x0),y=yf(x)+R()*spread,r=r0+R()*(r1-r0);c.fillStyle=cols[(R()*cols.length)|0];c.beginPath();c.arc(x,y,r,0,7);c.fill()}}
-function pines(c,R,x0,x1,y,n,col,h0=22,h1=46){for(let i=0;i<n;i++){const x=x0+R()*(x1-x0),h=h0+R()*(h1-h0),yy=y+R()*14;c.fillStyle=col[(R()*col.length)|0];c.beginPath();c.moveTo(x,yy-h);c.lineTo(x+h*.22,yy);c.lineTo(x-h*.22,yy);c.closePath();c.fill()}}
+  path(c,pts,o);c.fillStyle=grad(c,0,y0,0,y1,o.cols||[o.c0,o.c1]);c.fill();
+  c.save();c.clip();const t=o.t||{},ts=o.ts||1;
+  if(t.cloud)tex(c,'cloud',t.cloud,ts*1.6);if(t.strata)tex(c,'strata',t.strata,ts*1.5,ts);if(t.joint)tex(c,'joint',t.joint,ts,ts*1.5);if(t.grain)tex(c,'grain',t.grain,ts*.7);
+  const dip=o.dip||0;c.lineCap='round';
+  for(let i=0;i<(o.strata||0);i++){const y=y0+R()*(y1-y0),x=x0+R()*(x1-x0),l=30+R()*(o.sl||180);c.strokeStyle=R()<.55?`rgba(0,0,0,${.1+R()*.14})`:`rgba(255,255,255,${.05+R()*.1})`;c.lineWidth=.8+R()*2.2;c.beginPath();c.moveTo(x,y);c.lineTo(x+l*.5,y+dip*l*.5+(R()-.5)*3);c.lineTo(x+l,y+dip*l+(R()-.5)*4);c.stroke()}
+  for(let i=0;i<(o.joints||0);i++){const x=x0+R()*(x1-x0),y=y0+R()*(y1-y0),l=24+R()*(o.jl||130);c.strokeStyle=R()<.65?`rgba(0,0,0,${.12+R()*.16})`:`rgba(255,255,255,${.05+R()*.08})`;c.lineWidth=.8+R()*1.6;c.beginPath();c.moveTo(x,y);c.lineTo(x+(R()-.5)*5,y+l*.5);c.lineTo(x+(R()-.5)*6,y+l);c.stroke()}
+  if(o.lit){c.fillStyle=grad(c,x0,0,x1,0,o.lit>0?[rgba('#fff2d8',.16*o.lit),'rgba(0,0,0,0)',rgba('#0a1020',.3*o.lit)]:[rgba('#0a1020',-.3*o.lit),'rgba(0,0,0,0)',rgba('#fff2d8',-.16*o.lit)]);c.fillRect(x0,y0,x1-x0,y1-y0)}
+  c.restore()}
+/* A cliff built from vertical panels, the way jointed rock breaks: each panel has its own tone (lit or in shade),
+   its own height, and a few ledges with a shadow under them. o: x0,x1; top,bot: y by x; w:[min,max] panel width;
+   lit,dark: [top,bottom] colours; shade: x=>0..1 how shaded; vary; jag: skyline steps; ledges; veg: [chance,colours] */
+function cliff(c,R,o){const top=fnOf(o.top),bot=fnOf(o.bot),w=o.w||[30,110],lit=o.lit,dk=o.dark,sh=o.shade||(()=>.5),vary=o.vary==null?.7:o.vary,nl=o.ledges==null?2:o.ledges,jag=o.jag||0,P=[];
+  for(let x=o.x0;x<o.x1-1;){const q=R(),pw=Math.min(o.x1-x,w[0]+q*q*(w[1]-w[0])),xm=x+pw/2,j=(R()-.5)*jag*(pw<w[0]*2?1.8:1);
+    P.push({x,w:pw,k:clamp(sh(xm)+(R()-.5)*vary,0,1),ya:top(x)+j,yb:top(x+pw)+j+(R()-.5)*jag*.3,bot:Math.max(bot(x),bot(x+pw))+2});x+=pw}
+  const shape=p=>{c.beginPath();c.moveTo(p.x,p.ya);c.lineTo(p.x+p.w+.7,p.yb);c.lineTo(p.x+p.w+.7,p.bot);c.lineTo(p.x,p.bot);c.closePath()};
+  for(const p of P){const yt=Math.min(p.ya,p.yb);c.save();shape(p);c.clip();
+    // faces stacked down the panel, each a little lighter or darker, parted by ledges
+    let y=yt,k=p.k;const cuts=[];for(let i=Math.round(R()*nl);i>0;i--)cuts.push(lerp(yt,p.bot,.08+R()*.84));cuts.sort((a,b)=>a-b);cuts.push(p.bot);
+    for(const y2 of cuts){c.fillStyle=grad(c,0,y,0,y2,[mix(lit[0],dk[0],k),mix(lit[1],dk[1],clamp(k+.12,0,1))]);c.fillRect(p.x,y,p.w+1,y2-y+1);
+      if(y2<p.bot){const h=5+R()*15;c.fillStyle=grad(c,0,y2,0,y2+h+8,['rgba(12,6,10,.5)','rgba(12,6,10,0)']);c.fillRect(p.x,y2,p.w+1,h+8)}
+      y=y2;k=clamp(k+(R()-.5)*vary*.7,0,1)}
+    // each panel is a facet: lighter on the edge facing the light
+    c.fillStyle=grad(c,p.x,0,p.x+p.w,0,['rgba(255,236,208,.13)',[.5,'rgba(0,0,0,0)'],'rgba(12,6,10,.2)']);c.fillRect(p.x,yt,p.w+1,p.bot-yt);
+    c.restore();
+    for(const y2 of cuts)if(y2<p.bot){c.fillStyle='rgba(255,238,214,.2)';c.fillRect(p.x,y2-1.6,p.w,1.6);
+      if(o.veg&&R()<o.veg[0])for(let j=0;j<p.w/4;j++)if(R()<.7)crown(c,p.x+R()*p.w,y2-2-R()*2.5,1.6+R()*2.6,o.veg[1][(R()*o.veg[1].length)|0],.7)}}
+  c.save();c.beginPath();for(const p of P){c.moveTo(p.x,p.ya);c.lineTo(p.x+p.w+.7,p.yb);c.lineTo(p.x+p.w+.7,p.bot);c.lineTo(p.x,p.bot);c.closePath()}c.clip();const t=o.t||{cloud:.08,strata:.06};
+  if(t.cloud)tex(c,'cloud',t.cloud,1.8);if(t.strata)tex(c,'strata',t.strata,2.2,1.2);if(t.joint)tex(c,'joint',t.joint,1.2,2.2);if(t.grain)tex(c,'grain',t.grain,.8);
+  beds(c,R,o.x0,o.x1,Math.min(...P.map(p=>p.ya)),Math.max(...P.map(p=>p.bot)),o.beds||0,o.dip||0);c.restore();return P}
+// bedding: long, slightly wavy lines of darker and lighter rock
+function beds(c,R,x0,x1,y0,y1,n,dip=0,a=1){c.lineCap='round';for(let i=0;i<n;i++){const y=y0+R()*(y1-y0),xa=x0+R()*(x1-x0)*.8,l=60+R()*(x1-x0)*.5,wv=wave(R,1.6,50,2);
+    c.strokeStyle=R()<.6?`rgba(12,6,10,${a*(.08+R()*.14)})`:`rgba(255,238,214,${a*(.05+R()*.1)})`;c.lineWidth=1+R()*3;c.beginPath();for(let x=xa;x<=xa+l;x+=12){const yy=y+dip*(x-xa)+wv(x);x===xa?c.moveTo(x,yy):c.lineTo(x,yy)}c.stroke()}}
+// streaks left by running water: thin, crisp, tapering downwards
+function streaks(c,R,x0,x1,yf,n,o={}){const col=o.col||'#26262c',l0=o.len?o.len[0]:60,l1=o.len?o.len[1]:240,w0=o.w?o.w[0]:2,w1=o.w?o.w[1]:9,a=o.a||.3;
+  for(let i=0;i<n;i++){const x=x0+R()*(x1-x0),y=fnOf(yf)(x)+R()*(o.drop||30),l=l0+R()*(l1-l0),w=w0+R()*(w1-w0),k=(R()-.5)*w;
+    c.fillStyle=grad(c,0,y,0,y+l,[rgba(col,a*(.5+R()*.5)),[.6,rgba(col,a*.5)],rgba(col,0)]);c.beginPath();c.moveTo(x-w/2,y);c.lineTo(x+w/2,y);c.quadraticCurveTo(x+w*.4+k,y+l*.5,x+k,y+l);c.quadraticCurveTo(x-w*.4+k,y+l*.5,x-w/2,y);c.fill()}}
+// soft-edged tint or shadow inside a shape
+function tint(c,pts,style,o){c.save();path(c,pts,o);c.fillStyle=style;c.fill();c.restore()}
+
+/* Trees. Each crown is three discs: a shadow low on the right, the leaf colour, a highlight up on the left. */
+function crown(c,x,y,r,col,k=1){c.fillStyle=mix(col,'#06140c',.42*k);c.beginPath();c.arc(x+r*.22,y+r*.3,r,0,7);c.fill();
+  c.fillStyle=col;c.beginPath();c.arc(x,y,r,0,7);c.fill();
+  c.fillStyle=mix(col,'#e6f0a0',.26*k);c.beginPath();c.arc(x-r*.28,y-r*.32,r*.56,0,7);c.fill()}
+function canopy(c,R,x0,x1,yf,spread,n,cols,r0=7,r1=17,k=1){const t=[];for(let i=0;i<n;i++){const x=x0+R()*(x1-x0);t.push([x,yf(x)+R()*spread,r0+R()*(r1-r0),cols[(R()*cols.length)|0]])}
+  t.sort((a,b)=>a[1]-b[1]);for(const [x,y,r,col] of t)crown(c,x,y,r,col,k)}
+/* Forest seen from a distance: a dark mass with many small lit crowns, larger towards the bottom (nearer).
+   It fills from the line top(x) down to bot(x). */
+function forest(c,R,x0,x1,top,bot,cols,o={}){top=fnOf(top);bot=fnOf(bot==null?H+20:bot);const r0=o.r0||3,r1=o.r1||7,k=o.k==null?.85:o.k,step=8;
+  fill(c,[...curve(x0,x1,step,top),...curve(x0,x1,step,bot).reverse()],o.base||mix(cols[0],'#06140c',.45));
+  const t=[];for(let x=x0;x<x1;x+=step){const ya=top(x),yb=bot(x),n=Math.max(1,(yb-ya)*step/(r0+r1)**2*4*(o.dens||1));
+    for(let i=0;i<n;i++){const q=R(),y=lerp(ya,yb,q*q*.9+q*.1);t.push([x+R()*step,y,lerp(r0,r1,clamp((y-ya)/(o.depth||260),0,1))*(.7+R()*.6),cols[(R()*cols.length)|0]])}}
+  t.sort((a,b)=>a[1]-b[1]);for(const [x,y,r,col] of t)crown(c,x,y,r,col,k);
+  if(o.mottle!==0){c.save();path(c,[...curve(x0,x1,step,x=>top(x)-r1),...curve(x0,x1,step,bot).reverse()]);c.clip();c.globalCompositeOperation='source-atop';tex(c,'shade',o.mottle||.5,2.6,1.7);c.restore()}}
+function pine(c,x,y,h,col){const w=h*.3;c.fillStyle=mix(col,'#1a0f08',.5);c.fillRect(x-h*.025,y-h*.12,h*.05,h*.14);
+  for(let i=0;i<4;i++){const yy=y-h*.1-i*h*.2,ww=w*(1-i*.2);c.fillStyle=i%2?col:mix(col,'#06140c',.18);c.beginPath();c.moveTo(x,yy-h*.34);c.lineTo(x+ww,yy);c.lineTo(x-ww,yy);c.closePath();c.fill();
+    c.fillStyle=mix(col,'#dff0b0',.16);c.beginPath();c.moveTo(x,yy-h*.34);c.lineTo(x-ww,yy);c.lineTo(x-ww*.35,yy);c.closePath();c.fill()}}
+function pines(c,R,x0,x1,yf,n,cols,h0=22,h1=46){const t=[];for(let i=0;i<n;i++){const x=x0+R()*(x1-x0);t.push([x,fnOf(yf)(x)+R()*12,h0+R()*(h1-h0),cols[(R()*cols.length)|0]])}
+  t.sort((a,b)=>a[1]-b[1]);for(const [x,y,h,col] of t)pine(c,x,y,h,col)}
+// a painted cumulus: a flat base with heaped puffs, lit from the upper left
+function cloud(c,R,x,y,w,h,a=1,col='#ffffff',sh='#c3d0dc'){const P=[];for(let i=0,n=Math.max(6,w/16);i<n;i++){const k=(i+R()*.6)/n,r=h*(.3+.7*Math.sin(Math.PI*clamp(k,0,1)))*(.55+R()*.45);P.push([x+(k-.5)*w,y-r*.75,r])}
+  c.save();c.globalAlpha=a;c.beginPath();c.rect(x-w,y-h*2.2,w*2,h*2.2);c.clip();
+  c.fillStyle=sh;for(const [px,py,r] of P){c.beginPath();c.arc(px+r*.12,py+r*.3,r,0,7);c.fill()}
+  c.fillStyle=col;for(const [px,py,r] of P){c.beginPath();c.arc(px-r*.1,py-r*.08,r*.9,0,7);c.fill()}
+  c.restore()}
+// short bright dashes on still water
+function glints(c,R,x0,x1,y0,y1,n,col='#ffffff',a=.3){c.strokeStyle=col;c.lineCap='round';for(let i=0;i<n;i++){const k=R(),y=lerp(y0,y1,k),x=x0+R()*(x1-x0),l=(6+R()*26)*(.5+k);c.globalAlpha=a*(.3+R()*.7);c.lineWidth=.8+k*1.2;c.beginPath();c.moveTo(x,y);c.lineTo(x+l,y);c.stroke()}c.globalAlpha=1}
+function person(c,x,y,h,col='#e8502e'){c.fillStyle='#1b1b1b';c.fillRect(x-h*.11,y-h*.42,h*.22,h*.42);c.fillStyle=col;c.fillRect(x-h*.15,y-h*.8,h*.3,h*.42);c.fillStyle='#e9c7a5';c.beginPath();c.arc(x,y-h*.9,h*.11,0,7);c.fill()}
+
+/* Labels */
 function font(c,fs,wt=500){c.font=`${wt} ${fs}px "Instrument Sans",system-ui,sans-serif`}
 function txt(c,s,x,y,al='left',fs=FS,wt=500){font(c,fs,wt);c.textAlign=al;c.textBaseline='middle';c.lineJoin='round';c.lineWidth=fs*.3;c.strokeStyle='rgba(6,16,18,.72)';c.strokeText(s,x,y);c.fillStyle='#fff';c.fillText(s,x,y)}
 function seg(c,x0,y0,x1,y1){for(const [w,s] of [[4,'rgba(6,16,18,.55)'],[1.6,'#fff']]){c.lineWidth=w;c.strokeStyle=s;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke()}}
 function dimV(c,x,y0,y1,s,side=1){seg(c,x,y0,x,y1);seg(c,x-6,y0,x+6,y0);seg(c,x-6,y1,x+6,y1);txt(c,s,x+side*11,(y0+y1)/2,side>0?'left':'right')}
 function dimH(c,x0,x1,y,s,below=false){seg(c,x0,y,x1,y);seg(c,x0,y-6,x0,y+6);seg(c,x1,y-6,x1,y+6);txt(c,s,(x0+x1)/2,y+(below?1:-1)*(FS*.9+2),'center')}
-function eiffel(c,x,base,h){const b=h*.19;const P=[[-b,0],[-b*.45,-h*.3],[-b*.18,-h*.62],[-b*.035,-h],[b*.035,-h],[b*.18,-h*.62],[b*.45,-h*.3],[b,0],[b*.6,0],[0,-h*.17],[-b*.6,0]].map(p=>[x+p[0],base+p[1]]);
-  c.beginPath();P.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fillStyle='rgba(255,255,255,.9)';c.strokeStyle='rgba(6,16,18,.6)';c.lineWidth=1.5;c.stroke();c.fill()}
+// a caption on a dark pill, for the feature a scene is about
+function pill(c,s,x,y,al='center',fs=FS){font(c,fs,500);const w=c.measureText(s).width+fs*1.3,h=fs*1.75,x0=al==='center'?x-w/2:al==='right'?x-w:x;
+  c.fillStyle='rgba(6,16,18,.66)';c.beginPath();c.roundRect(x0,y-h/2,w,h,h/2);c.fill();c.fillStyle='#fff';c.textAlign='left';c.textBaseline='middle';c.fillText(s,x0+fs*.65,y+fs*.04)}
+// the Eiffel Tower, 330 m, as a height marker: the outline follows the real taper (125 m wide at the foot)
+function eiffel(c,x,base,h){const b=h*.19,wd=z=>b*(z<.9?Math.exp(-3.6*z):.03),L=[],Rr=[];
+  for(let i=0;i<=24;i++){const z=i/24*.9,w=wd(z);L.push([x-w,base-z*h]);Rr.unshift([x+w,base-z*h])}
+  c.save();c.beginPath();L.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.lineTo(x-h*.004,base-h*.9);c.lineTo(x,base-h);c.lineTo(x+h*.004,base-h*.9);Rr.forEach(p=>c.lineTo(p[0],p[1]));
+  c.lineTo(x+b*.62,base);c.quadraticCurveTo(x,base-h*.2,x-b*.62,base);c.closePath();
+  c.fillStyle='rgba(255,255,255,.93)';c.strokeStyle='rgba(6,16,18,.62)';c.lineWidth=1.5;c.lineJoin='round';c.stroke();c.fill();
+  c.strokeStyle='rgba(6,16,18,.45)';c.lineWidth=Math.max(1,h*.008);for(const z of [.173,.35,.84]){const w=wd(z)*1.12;c.beginPath();c.moveTo(x-w,base-z*h);c.lineTo(x+w,base-z*h);c.stroke()}
+  c.restore()}
+
+/* old drawing helpers, kept only until every scene is redrawn */
+function skyO(c,a,b,y1=H){const g=c.createLinearGradient(0,0,0,y1);g.addColorStop(0,a);g.addColorStop(1,b);c.fillStyle=g;c.fillRect(0,0,W,H)}
+function polyO(c,pts,fill){c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fillStyle=fill;c.fill()}
+function rockO(c,R,pts,c0,c1,o={}){
+  let y0=1e9,y1=-1e9,x0=1e9,x1=-1e9;pts.forEach(p=>{y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0])});
+  const g=c.createLinearGradient(0,y0,0,y1);g.addColorStop(0,c0);g.addColorStop(1,c1);polyO(c,pts,g);
+  c.save();c.clip();
+  for(let i=0;i<(o.strata||0);i++){const y=y0+R()*(y1-y0),x=x0+R()*(x1-x0),l=40+R()*200;c.strokeStyle=R()<.5?'rgba(0,0,0,.16)':'rgba(255,255,255,.10)';c.lineWidth=1+R()*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+l,y+(R()-.5)*5);c.stroke()}
+  for(let i=0;i<(o.joints||0);i++){const x=x0+R()*(x1-x0),y=y0+R()*(y1-y0),l=30+R()*140;c.strokeStyle=R()<.6?'rgba(0,0,0,.22)':'rgba(255,255,255,.08)';c.lineWidth=1+R()*1.5;c.beginPath();c.moveTo(x,y);c.lineTo(x+(R()-.5)*4,y+l);c.stroke()}
+  c.restore();
+}
+function ridgeO(c,R,y,amp,col,step=36){c.beginPath();c.moveTo(0,H);for(let x=0;x<=W+step;x+=step)c.lineTo(x,y+(R()-.5)*amp);c.lineTo(W,H);c.closePath();c.fillStyle=col;c.fill()}
+function canopyO(c,R,x0,x1,yf,spread,n,cols,r0=7,r1=17){for(let i=0;i<n;i++){const x=x0+R()*(x1-x0),y=yf(x)+R()*spread,r=r0+R()*(r1-r0);c.fillStyle=cols[(R()*cols.length)|0];c.beginPath();c.arc(x,y,r,0,7);c.fill()}}
+function pinesO(c,R,x0,x1,y,n,col,h0=22,h1=46){for(let i=0;i<n;i++){const x=x0+R()*(x1-x0),h=h0+R()*(h1-h0),yy=y+R()*14;c.fillStyle=col[(R()*col.length)|0];c.beginPath();c.moveTo(x,yy-h);c.lineTo(x+h*.22,yy);c.lineTo(x-h*.22,yy);c.closePath();c.fill()}}
 
 /* ============================== SCENES ==============================
-   Each scene paints a static background (bg) and labels (fg), and returns the layers drawn between them. */
+   Each scene paints its static layers (bg first, more from still()), puts labels on fg, and returns its stack of
+   layers in drawing order. Rock, trees and sky are drawings made from photo references; the notes under each
+   waterfall say what is to scale. */
 const SCENES={
-angel({bg,fg,R}){
-  const s=.47,top=96,pl=top+807*s,base=top+979*s;
-  sky(bg,'#5f9fd0','#dfeee8');
-  poly(bg,[[640,330],[668,214],[930,208],[1000,250],[1000,340]],'#8fb0c2');
-  ridge(bg,R,345,40,'#7f9f97');
-  rock(bg,R,[[0,560],[60,470],[112,106],[300,93],[620,97],[846,89],[900,440],[1000,515],[1000,620],[0,620]],'#c08060','#6d4136',{strata:60,joints:14});
-  poly(bg,[[110,108],[300,91],[620,95],[848,87],[850,99],[620,106],[300,102],[112,118]],'#4b7a3d');
-  bg.fillStyle='rgba(35,16,14,.38)';bg.fillRect(456,top+6,34,pl-top);
-  poly(bg,[[0,620],[0,548],[200,505],[430,476],[560,484],[800,508],[1000,540],[1000,620]],'#2c5a33');
-  canopy(bg,R,0,1000,x=>478+Math.abs(x-480)*.085,110,300,['#2c5a33','#3a7040','#254c2b','#4a8548']);
-  const layers=[
-    new Mist(R,{x0:-100,x1:900,y0:40,y1:130,n:9,size:300,rise:0,drift:13,a:.4,life:22,grow:.3}),
-    new Fall(R,{x0:466,x1:480,top,bot:pl,n:190,g:G*s,v0:9,vmax:70,atom:.4,wind:30,lw:1.5,streak:.42,body:'#f2fafb',bodyA:.9}),
-    new Mist(R,{x0:450,x1:560,y0:pl-150,y1:pl,n:30,size:120,rise:4,drift:8,a:.22,life:8}),
-    new Fall(R,{x0:476,x1:506,top:pl-4,bot:base,n:36,g:G*s*.6,v0:12,vmax:40,lw:1.3,streak:.3,bodyA:.45}),
+angel({bg,fg,R,still}){
+  // Auyán-tepui seen from the river: sunlit orange sandstone to the left of the fall, a dark wet wall to its right
+  const s=.47,top=96,pl=top+807*s,base=top+979*s,fx=432;
+  sky(bg,['#2f6fb5','#6fa5d8','#cfe2ee'],470);
+  cloud(bg,R,900,96,300,86,.95);cloud(bg,R,700,40,150,34,.6);
+  // a far tepui, blue with distance
+  const far=wave(R,5,70);
+  fill(bg,[[640,420],[690,236],...curve(700,1000,20,x=>228+far(x)),[1000,420]],grad(bg,0,220,0,420,['#7f9fc0','#a9c3d6']));
+  haze(bg,300,470,'#dbe8ef',0,.6);
+  // the wall: the rim steps down to the right of the notch
+  const rim=x=>x<fx-22?74+(fx-x)*.05:x<fx+14?top-2:x<560?86+(x-fx)*.06:94+Math.pow((x-560)/420,1.5)*330;
+  const sh=x=>x<fx-10?.12+.25*Math.max(0,Math.sin(x/47)):x<fx+190?.95:.35+.4*Math.sin(x/60);
+  cliff(bg,R,{x0:0,x1:1000,top:rim,bot:()=>pl+60,w:[9,120],jag:14,lit:['#e08a4c','#b4603a'],dark:['#4b4452','#2f2a36'],shade:sh,vary:.5,ledges:3,veg:[.5,['#4f7f3c','#3f6e33','#679048']],beds:70,t:{cloud:.2,strata:.16}});
+  // the shadowed slot the water falls through, and a damp sheen beside it
+  bg.fillStyle=grad(bg,fx-40,0,fx+60,0,['rgba(20,12,22,0)',[.45,'rgba(20,12,22,.55)'],'rgba(20,12,22,0)']);bg.fillRect(fx-40,top-4,100,pl-top);
+  // forested buttress climbing the right-hand ridge
+  forest(bg,R,560,1000,x=>rim(x)+34+Math.max(0,(700-x)*.9)+far(x*2),null,['#2f5f34','#3d7340','#28522d','#4c8648'],{r0:3,r1:6,depth:330});
+  // bare talus cone under the plunge and the gully that carries the stream on down
+  const tal=[[fx-120,pl+48],[fx-60,pl+6],[fx-8,pl-16],[fx+40,pl-10],[fx+110,pl+18],[fx+150,pl+56]];
+  rock(bg,R,[...tal,[fx+150,base+10],[fx-120,base+10]],{smooth:1,c0:'#5d5258',c1:'#3a3034',t:{cloud:.3,grain:.2},joints:10,jl:30});
+  const gx=y=>fx+18+60*smooth((y-pl)/(base-pl-36))+6*Math.sin(y/9);
+  // valley sides: rainforest closing in on the gully from both sides
+  const cols=['#2c5a33','#3a7040','#254c2b','#4a8548','#356a3a'];
+  forest(bg,R,0,fx+40,x=>pl+40-(fx-x)*.13+far(x*1.7)*1.5+Math.max(0,x-fx+60)*.9,null,cols,{r0:3.5,r1:9,depth:150});
+  forest(bg,R,fx+70,1000,x=>pl+70-(x-fx)*.1+far(x*1.3)*1.5+Math.max(0,fx+150-x)*.5,null,cols,{r0:3.5,r1:9,depth:150});
+  // the gully is bare rock and boulders; near the bottom the stream steps over an orange ledge (the lower cascade)
+  const ly=base-34,lx=gx(ly);
+  fill(bg,[...curve(pl+20,base+4,8,y=>y).map(([y])=>[gx(y)-9-(y-pl)*.05,y]),...curve(pl+20,base+4,8,y=>y).map(([y])=>[gx(y)+9+(y-pl)*.05,y]).reverse()],grad(bg,0,pl,0,base,['#4a4044','#6a5a50']),{smooth:1});
+  for(let i=0;i<40;i++){const y=pl+24+R()*(base-pl-24),x=gx(y)+(R()-.5)*(20+(y-pl)*.1),r=1.5+R()*3.5;bg.fillStyle=R()<.5?'#8a7a6e':'#3a3034';bg.beginPath();bg.ellipse(x,y,r*1.3,r,0,0,7);bg.fill()}
+  rock(bg,R,[[lx-24,ly-4],[lx+24,ly-6],[lx+30,base+2],[lx-30,base+2]],{c0:'#c07a4c',c1:'#74442e',strata:10,sl:34,t:{strata:.3}});
+  const L=[
+    new Fall(R,{x0:fx+40,x1:fx+45,top:top+16,bot:pl-70,n:30,g:G*s,v0:8,vmax:70,atom:.3,wind:14,spread:8,sway:8,lw:1.1,streak:.4,bodyA:.55,fine:2}),
+    new Fall(R,{x0:fx-7,x1:fx+8,top,bot:pl,n:190,g:G*s,v0:9,vmax:70,atom:.45,wind:22,spread:32,sway:14,lw:1.5,streak:.42,body:'#f6fbfc',bodyA:.97,fine:1.6}),
+    new Mist(R,{x0:fx-20,x1:fx+70,y0:pl-240,y1:pl-40,n:26,size:110,rise:-10,drift:8,a:.2,life:9,grow:.8,op:.42}),
+    new Mist(R,{x0:fx-50,x1:fx+90,y0:pl-30,y1:pl+12,n:30,size:100,rise:8,drift:9,a:.22,life:7,op:.6}),
   ];
-  canopy(fg,R,380,640,x=>base-12,40,60,['#2c5a33','#3a7040','#254c2b']);
-  eiffel(fg,735,base,330*s);txt(fg,'Eiffel Tower, 330 m',735,base+FS+8,'center');
-  dimV(fg,424,top,pl,'807 m plunge',-1);dimV(fg,548,top,base,'979 m in all',1);
-  return {layers};
+  // the stream down the gully, then the lower cascade in three steps
+  for(let y=pl+10;y<ly-12;y+=16)L.push(new Fall(R,{x0:gx(y)-3,x1:gx(y)+3,top:y,bot:y+17,wind:gx(y+17)-gx(y),n:10,g:G*s*.5,v0:14,vmax:40,lw:1.2,streak:.3,bodyA:.85,fine:2}));
+  for(let i=0;i<3;i++)L.push(new Fall(R,{x0:lx-14-i*2,x1:lx+13+i*3,top:ly-5+i*11,bot:ly+7+i*11,spread:2,n:22,g:G*s*.5,v0:12,vmax:40,lw:1.3,streak:.3,body:'#f3e9d8',bodyA:.94,fine:1.4}));
+  L.push(new Mist(R,{x0:lx-16,x1:lx+18,y0:base-6,y1:base+4,n:8,size:34,rise:4,drift:3,a:.2,life:4,op:.4}));
+  // nearer trees close over the stream; cloud drifts along the rim
+  const mid=still(),dark=['#1f4426','#2a5630','#183a20','#33663a'];
+  forest(mid,R,0,lx-28,x=>base-30-(lx-x)*.03+far(x*2)*1.4,null,dark,{r0:6,r1:13,depth:70});
+  forest(mid,R,lx+30,1000,x=>base-22-(x-lx)*.03+far(x*2.3)*1.4,null,dark,{r0:6,r1:13,depth:70});
+  forest(mid,R,0,1000,x=>base+22+far(x*3)*2,null,['#17371f','#214a28','#122c18'],{r0:10,r1:17,depth:50});
+  L.push(mid.layer);
+  L.push(new Mist(R,{x0:-300,x1:700,y0:30,y1:92,n:9,size:230,rise:0,drift:10,a:.4,life:28,grow:.3,op:.42,sh:'#e4ebf2'}));
+  // one drop followed down the plunge: distance fallen = ½ g t²
+  const T=Math.sqrt(2*807/G);
+  L.push({draw(c,dt,t){const u=t%(T+2.2),k=Math.min(u,T),y=top+.5*G*s*k*k,x=fx-34+22*Math.pow((y-top)/(pl-top),2);
+    c.fillStyle='rgba(6,16,18,.55)';c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.arc(x,y,5,0,7);c.fill();c.stroke();
+    txt(c,`one drop: ${k.toFixed(1)} s`,x-12,y,'right')}});
+  eiffel(fg,770,base,330*s);txt(fg,'Eiffel Tower, 330 m',770,base+FS+8,'center');
+  dimV(fg,fx-150,top,pl,'807 m plunge',-1);dimV(fg,fx+150,top,base,'979 m in all',1);
+  return {layers:L};
 },
-tugela({bg,fg,R}){
-  const s=.5,top=84;const T=D.tugelaTiers; // metres, top to bottom
-  sky(bg,'#86b6dc','#e6efe6');
-  rock(bg,R,[[0,150],[90,96],[260,84],[470,80],[640,86],[820,78],[940,100],[1000,140],[1000,620],[0,620]],'#5d6a5c','#39443c',{strata:70,joints:40});
-  poly(bg,[[0,620],[0,430],[180,400],[420,470],[560,520],[1000,560],[1000,620]],'#7d9a52');
-  poly(bg,[[1000,620],[1000,380],[860,420],[700,500],[600,560],[640,620]],'#6c8a48');
-  canopy(bg,R,0,1000,x=>575,40,90,['#56753c','#6c8a48','#48652f'],5,11);
-  const layers=[new Mist(R,{x0:-200,x1:800,y0:60,y1:150,n:7,size:320,rise:0,drift:16,a:.5,life:24,grow:.3})];
-  let y=top,x=474;const marks=[];
-  T.forEach((m,i)=>{const h=m*s;bg.fillStyle='rgba(20,28,24,.4)';bg.fillRect(x-5,y,16,h);
-    bg.fillStyle='#4a564a';bg.fillRect(x-8,y+h-2,44,5);
-    layers.push(new Fall(R,{x0:x,x1:x+6,top:y,bot:y+h,n:Math.round(26+h*.35),g:G*s,v0:8,vmax:60,lw:1.3,streak:.4,sway:5+h*.03,atom:h>150?.55:1.01,wind:h>150?10:0,body:'#eef7f8',bodyA:.7}));
-    marks.push([x,y,y+h,m]);y+=h;x+=22});
+tugela({bg,fg,R,still}){
+  // the Amphitheatre wall: stacked basalt flows with grass on every ledge, and the stream stepping down a gully
+  const s=.5,top=84,T=D.tugelaTiers,fx=462; // tier heights in metres, top to bottom
+  sky(bg,['#3b7fc8','#86b6e2','#dbe9f0'],440);
+  cloud(bg,R,180,64,300,46,.9);cloud(bg,R,640,40,210,30,.75);
+  const wob=wave(R,4,80),wob2=wave(R,3,37);
+  // skyline: the flat rim, then a gap with the Devil's Tooth and a higher buttress to the right
+  const rim=x=>x<684?top-4+wob(x)+(x<200?-(200-x)*.1:0):x<700?top-4+(x-684)*5:x<738?top+78+wob(x):x<746?top+78-(x-738)*11:x<756?top-12:x<764?top-12+(x-756)*11:x<792?top+76:x<808?top+76-(x-792)*7:top-38+wob(x)+Math.max(0,x-940)*.8;
+  const lit=['#8a7c6a','#6b6054'],dark=['#4b4741','#33312d'],foot=x=>top+368+16*Math.sin(x/140+1)+wob(x)*2;
+  const gully=(x,y)=>Math.exp(-Math.pow((x-(fx+8+(y-top)*.22))/46,2)); // the wet recess the stream follows
+  const wall=[...curve(0,1000,4,rim),[1000,480],[0,480]];
+  fill(bg,wall,'#4a443d');bg.save();path(bg,wall);bg.clip();
+  // the lava flows lie flat, one on another; the skyline is cut down through them
+  const ledge=[];
+  for(let y0=top-60,i=0;y0<480;i++){const h=38+R()*30,ph=R()*9,wv=x=>wob2(x+ph*40)+2*Math.sin(x/23+ph),ya=y0;
+    cliff(bg,R,{x0:0,x1:1000,top:x=>ya+wv(x),bot:()=>ya+h+8,w:[8,44],jag:2,lit,dark,shade:x=>.28+.2*Math.sin(x/90+ph)+.5*gully(x,ya)+i*.015,vary:.45,ledges:0,beds:4,t:{cloud:.08}});
+    ledge.push([x=>ya+wv(x),i]);y0+=h}
+  // shadow under each ledge, then grass along it: thicker lower down the wall
+  for(const [yf,i] of ledge){bg.fillStyle='rgba(16,14,12,.36)';path(bg,[...curve(0,1000,8,yf),...curve(0,1000,8,x=>yf(x)+8).reverse()]);bg.fill();
+    const g0=wave(R,1,60,2);for(let x=0;x<1000;x+=3.5){const k=g0(x)+.25+i*.07-gully(x,yf(x))*.5;if(k<0)continue;const hh=1.2+Math.min(1,k)*(2.5+i*.5)*(.6+R()*.6);
+      bg.fillStyle=mix(R()<.5?'#7e9a4c':'#66863e','#a9a35a',R()*.35);bg.beginPath();bg.ellipse(x+2,yf(x)-hh*.3,3.2,hh,0,0,7);bg.fill()}}
+  streaks(bg,R,0,1000,rim,50,{len:[40,200],w:[2,8],a:.32,drop:200,col:'#1c1a18'});
+  haze(bg,330,480,'#b9d0d6',0,.22);
+  bg.restore();
+  // rim grass of the summit plateau
+  bg.strokeStyle='#a5a65a';bg.lineWidth=3.5;bg.lineCap='round';path(bg,curve(0,684,8,x=>rim(x)+1),{close:false});bg.stroke();path(bg,curve(808,1000,8,x=>rim(x)+1),{close:false});bg.stroke();
+  // below the cliffs: steep grass spurs running down into the gorge, with the rocky bed the stream follows
+  fill(bg,[[0,620],...curve(0,1000,12,foot),[1000,620]],grad(bg,0,440,0,620,['#7da24c','#5c8a3e','#3f6e34']));
+  bg.save();path(bg,[[0,620],...curve(0,1000,12,foot),[1000,620]]);bg.clip();
+  for(let i=0;i<30;i++){const x=R()*1000,yy=foot(x)+R()*24,l=60+R()*110,dx=(fx+100-x)*.3;bg.strokeStyle=i%2?'rgba(30,60,26,.3)':'rgba(190,210,120,.2)';bg.lineWidth=3+R()*8;bg.lineCap='round';bg.beginPath();bg.moveTo(x,yy);bg.quadraticCurveTo(x+dx*.2,yy+l*.6,x+dx,yy+l);bg.stroke()}
+  for(let i=0;i<5;i++){const x=40+R()*900,yy=foot(x)+40+R()*50,w=40+R()*60;if(Math.abs(x+w/2-fx-90)<90)continue;rock(bg,R,[[x,yy],[x+w*.5,yy-4],[x+w,yy-1],[x+w+3,yy+7+R()*4],[x-3,yy+8]],{c0:'#c2b392',c1:'#8f8068',strata:2,sl:30});for(let q=x;q<x+w;q+=4){bg.fillStyle='#6f9444';bg.beginPath();bg.ellipse(q,yy-2,3,2,0,0,7);bg.fill()}}
+  const bedx=yv=>fx+8+(yv-top)*.22;
+  fill(bg,[...curve(foot(fx+90)-6,566,10,v=>v).map(([v])=>[bedx(v)-16-(v-450)*.06,v]),...curve(foot(fx+90)-6,566,10,v=>v).map(([v])=>[bedx(v)+22+(v-450)*.06,v]).reverse()],grad(bg,0,440,0,566,['#5a5248','#6e6456']),{smooth:1});
+  tex(bg,'shade',.3,2.4,1.6);bg.restore();
+
+  const L=[new Mist(R,{x0:-260,x1:760,y0:40,y1:top+30,n:7,size:280,rise:0,drift:13,a:.5,life:26,grow:.3,op:.5,sh:'#e1e8ef'})];
+  let yy=top,x=fx;const marks=[];
+  T.forEach((m,i)=>{const h=m*s;
+    bg.fillStyle=grad(bg,x-16,0,x+22,0,['rgba(14,14,14,0)',[.5,'rgba(14,14,14,.5)'],'rgba(14,14,14,0)']);bg.fillRect(x-16,yy,38,h);
+    fill(bg,[[x-10,yy+h-2],[x+30,yy+h-3],[x+34,yy+h+4],[x-8,yy+h+4]],'#4c463e');
+    L.push(new Fall(R,{x0:x,x1:x+6,top:yy,bot:yy+h,n:Math.round(26+h*.35),g:G*s,v0:8,vmax:60,lw:1.3,streak:.4,sway:4+h*.03,spread:h>150?9:2,atom:h>150?.62:1.01,wind:h>150?8:0,body:'#f2f8f9',bodyA:.93,fine:2.2}));
+    marks.push([x,yy,yy+h,m,i]);yy+=h;x+=22});
   const big=marks.reduce((a,b)=>b[3]>a[3]?b:a);
-  dimV(fg,big[0]-26,big[1],big[2],big[3]+' m, tallest tier',-1);
-  dimV(fg,x+40,top,y,D.tugelaTotal+' m in five tiers',1);
-  eiffel(fg,800,y,330*s);txt(fg,'Eiffel Tower, 330 m',800,y+FS+8,'center');
-  return {layers};
+  L.push(new Mist(R,{x0:big[0]-16,x1:big[0]+40,y0:big[2]-60,y1:big[2]+4,n:10,size:60,rise:5,drift:6,a:.2,life:6,op:.4}));
+  // foreground ridge in shade, with long grass
+  const near=still(),nf2=x=>590+10*Math.sin(x/170)+wob(x*1.3)*1.5-Math.abs(x-500)*.02;
+  fill(near,[[0,620],...curve(0,1000,12,nf2),[1000,620]],grad(near,0,585,0,620,['#456f33','#284a24']));
+  for(let i=0;i<900;i++){const gx=R()*1000,gy=nf2(gx)+R()*32;near.strokeStyle=R()<.4?'rgba(176,200,104,.5)':'rgba(24,52,24,.55)';near.lineWidth=1.1;near.beginPath();near.moveTo(gx,gy);near.quadraticCurveTo(gx+(R()-.5)*3,gy-6,gx+(R()-.5)*9,gy-6-R()*9);near.stroke()}
+  L.push(near.layer);
+  for(const [mx,ya,yb,m,i] of marks)txt(fg,String(i+1),mx-14,ya+Math.min(26,(yb-ya)/2),'right',FS*.9,600);
+  dimV(fg,big[0]-38,big[1],big[2],big[3]+' m, tallest tier',-1);
+  dimV(fg,x+40,top,yy,D.tugelaTotal+' m in five tiers',1);
+  eiffel(fg,830,yy,330*s);txt(fg,'Eiffel Tower, 330 m',830,yy+FS+8,'center');
+  return {layers:L};
 },
 victoria({bg,fg,R}){
   const x0=50,x1=950,lip=222,ex=3,bot=lip+108*(900/1708)*ex;
-  sky(bg,'#9cc3de','#e9efe2');
-  ridge(bg,R,150,8,'#6f8a55',20);
+  skyO(bg,'#9cc3de','#e9efe2');
+  ridgeO(bg,R,150,8,'#6f8a55',20);
   bg.fillStyle='#4f8fae';bg.fillRect(0,158,W,lip-158);
   const isl=['#3f6a35','#4d7a3e','#365c2e'];
   [[90,175,60],[300,186,90],[610,172,70],[820,190,110],[450,200,50]].forEach(([x,y,w])=>{bg.fillStyle=isl[(R()*3)|0];bg.beginPath();bg.ellipse(x,y,w/2,6,0,0,7);bg.fill()});
-  rock(bg,R,[[0,lip],[W,lip],[W,bot+30],[0,bot+30]],'#4a4640','#22201d',{strata:50,joints:60});
+  rockO(bg,R,[[0,lip],[W,lip],[W,bot+30],[0,bot+30]],'#4a4640','#22201d',{strata:50,joints:60});
   bg.fillStyle='#35595a';bg.fillRect(0,bot,W,60);
   const gaps=[[150,184],[520,566],[705,718],[838,856]]; // islands on the lip, west to east
   const layers=[new Flow(R,{x0:0,x1:W,y0:160,y1:lip-2,vx:0,vy:9,n:90,len:9,a:.4})];
   let a=x0;const segs=[];gaps.forEach(g=>{segs.push([a,g[0]]);a=g[1]});segs.push([a,x1]);
   segs.forEach(([p,q])=>layers.push(new Fall(R,{x0:p,x1:q,top:lip,bot,n:Math.round((q-p)*.55),g:G*(900/1708)*ex,v0:14,vmax:120,lw:1.5,streak:.2,body:'#d6eef2',bodyA:.92})));
-  gaps.forEach(([p,q])=>{canopy(fg,R,p,q,x=>lip-8,8,10,isl,5,9)});
+  gaps.forEach(([p,q])=>{canopyO(fg,R,p,q,x=>lip-8,8,10,isl,5,9)});
   layers.push(new Mist(R,{x0:60,x1:940,y0:bot-30,y1:bot+20,n:80,size:150,rise:46,drift:5,a:.26,life:7.5,grow:1.6}));
   // near rim: the rainforest on the facing cliff
-  rock(fg,R,[[0,620],[0,470],[160,455],[420,468],[700,452],[1000,474],[1000,620]],'#33402c','#161c14',{strata:16});
-  canopy(fg,R,0,1000,x=>452,34,150,['#2d5a2e','#3c7139','#234a26','#4b8443']);
+  rockO(fg,R,[[0,620],[0,470],[160,455],[420,468],[700,452],[1000,474],[1000,620]],'#33402c','#161c14',{strata:16});
+  canopyO(fg,R,0,1000,x=>452,34,150,['#2d5a2e','#3c7139','#234a26','#4b8443']);
   // rainbow in the spray
   bg.save();bg.lineWidth=5;['#e2504a','#eea13c','#e9dc55','#63bf6b','#4a8fd6','#8a62c4'].forEach((c,i)=>{bg.strokeStyle=rgba(c,.5);bg.beginPath();bg.arc(760,bot+70,210-i*5,Math.PI*1.08,Math.PI*1.62);bg.stroke()});bg.restore();
   dimH(fg,x0,x1,104,'1,708 m, one continuous line of falls');
@@ -578,27 +770,27 @@ victoria({bg,fg,R}){
 },
 iguazu({bg,fg,R}){
   const l1=205,sh=292,l2=302,base=412;
-  sky(bg,'#8ebfe0','#e4efe0');
-  canopy(bg,R,0,1000,x=>132,26,160,['#2f6534','#3b7a3f','#28572d'],8,16);
+  skyO(bg,'#8ebfe0','#e4efe0');
+  canopyO(bg,R,0,1000,x=>132,26,160,['#2f6534','#3b7a3f','#28572d'],8,16);
   bg.fillStyle='#8f9a6a';bg.fillRect(0,160,W,l1-160);
-  rock(bg,R,[[0,l1],[W,l1],[W,base+10],[0,base+10]],'#4f4a40','#2a2622',{strata:60,joints:30});
+  rockO(bg,R,[[0,l1],[W,l1],[W,base+10],[0,base+10]],'#4f4a40','#2a2622',{strata:60,joints:30});
   bg.fillStyle='#5b6a4a';bg.fillRect(300,sh-4,700,14);
   bg.fillStyle='#6f7f5c';bg.fillRect(0,base,W,90);
   const layers=[new Flow(R,{x0:0,x1:W,y0:162,y1:l1-2,vx:-6,vy:8,n:80,len:9,a:.35}),
                 new Flow(R,{x0:0,x1:W,y0:base+8,y1:base+86,vx:-34,vy:3,n:70,len:16,a:.45})];
   // Devil's Throat: a U-shaped chute taking the full drop
   const cx=165,rx=120,tY=x=>l1+38-70*Math.sqrt(Math.max(0,1-((x-cx)/rx)**2));
-  poly(bg,[[cx-rx,l1+38],[cx-rx,160],[cx+rx,160],[cx+rx,l1+38]],'#8f9a6a');
+  polyO(bg,[[cx-rx,l1+38],[cx-rx,160],[cx+rx,160],[cx+rx,l1+38]],'#8f9a6a');
   layers.push(new Fall(R,{x0:cx-rx,x1:cx+rx,top:tY,bot:x=>base+6-20*(1-((x-cx)/rx)**2),n:190,g:G*2.5,v0:20,vmax:150,lw:1.6,streak:.16,body:'#b9c19a',foam:'#f4f5e8',bodyA:.94,foamAt:.6}));
   // two tiers of separate streams
   let count=1;const cols=['#2f6534','#3b7a3f','#28572d','#4c8a48'];
   for(const [ya,yb,xa] of [[l1,sh,320],[l2,base,300]]){let x=xa;while(x<970){const w=7+R()*30;if(x+w>985)break;
       layers.push(new Fall(R,{x0:x,x1:x+w,top:ya,bot:yb,n:Math.round(6+w*.9),g:G*2.5,v0:18,vmax:150,lw:1.4,streak:.16,body:'#e9ecd8',bodyA:.9}));count++;
-      const gap=8+R()*26;canopy(fg,R,x+w+1,x+w+gap-1,()=>ya-7,6,Math.ceil(gap/7),cols,4,8);x+=w+gap}}
+      const gap=8+R()*26;canopyO(fg,R,x+w+1,x+w+gap-1,()=>ya-7,6,Math.ceil(gap/7),cols,4,8);x+=w+gap}}
   layers.push(new Mist(R,{x0:40,x1:290,y0:base-60,y1:base+10,n:44,size:150,rise:40,drift:4,a:.3,life:6.5,grow:1.5}));
   layers.push(new Mist(R,{x0:300,x1:980,y0:base-14,y1:base+14,n:40,size:70,rise:10,drift:-4,a:.2,life:5}));
-  rock(fg,R,[[0,620],[0,512],[250,500],[520,514],[1000,498],[1000,620]],'#2c3a27','#141a12',{});
-  canopy(fg,R,0,1000,x=>500,40,150,['#2d5a2e','#3c7139','#234a26','#4b8443']);
+  rockO(fg,R,[[0,620],[0,512],[250,500],[520,514],[1000,498],[1000,620]],'#2c3a27','#141a12',{});
+  canopyO(fg,R,0,1000,x=>500,40,150,['#2d5a2e','#3c7139','#234a26','#4b8443']);
   txt(fg,"Devil's Throat",cx,l1-52,'center');
   dimV(fg,975,l1,base,'up to 82 m',-1);
   txt(fg,`${count} streams drawn here; about 275 in reality, along 2.7 km`,W/2+90,104,'center');
@@ -608,16 +800,16 @@ niagara({bg,fg,R}){
   const cx=500,rx=380,hz=132,s=2.1;
   const top=x=>330-170*Math.sqrt(Math.max(0,1-((x-cx)/rx)**2));
   const bot=x=>top(x)+57*s*(1+.55*((x-cx)/rx)**2);
-  sky(bg,'#a9cbe6','#eef3ee',hz);
+  skyO(bg,'#a9cbe6','#eef3ee',hz);
   bg.fillStyle='#2a7d78';bg.fillRect(0,hz,W,H-hz);
   const up=c=>{c.moveTo(cx-rx,hz);for(let x=cx-rx;x<=cx+rx;x+=10)c.lineTo(x,top(x));c.lineTo(cx+rx,top(cx+rx));c.lineTo(cx+rx,hz);c.closePath()};
   const g=bg.createLinearGradient(0,hz,0,330);g.addColorStop(0,'#3a8f9c');g.addColorStop(1,'#35b09a');bg.fillStyle=g;bg.beginPath();up(bg);bg.fill();
-  ridge(bg,R,hz-4,8,'#55724f',18);bg.fillStyle='#2a7d78';
+  ridgeO(bg,R,hz-4,8,'#55724f',18);bg.fillStyle='#2a7d78';
   // rock behind the curtain
   bg.beginPath();for(let x=cx-rx;x<=cx+rx;x+=10)bg.lineTo(x,top(x));for(let x=cx+rx;x>=cx-rx;x-=10)bg.lineTo(x,bot(x));bg.closePath();bg.fillStyle='#3d3a34';bg.fill();
   for(const d of [-1,1]){const e=cx+d*rx,o=d<0?0:W;
-    poly(bg,[[o,hz],[e,hz],[e,330],[o,366]],'#6b8a57');
-    rock(bg,R,[[o,366],[e,330],[e-d*22,620],[o,620]],'#77695a','#3a322b',{strata:26});}
+    polyO(bg,[[o,hz],[e,hz],[e,330],[o,366]],'#6b8a57');
+    rockO(bg,R,[[o,366],[e,330],[e-d*22,620],[o,620]],'#77695a','#3a322b',{strata:26});}
   const layers=[
     new Flow(R,{x0:cx-rx,x1:cx+rx,y0:hz,y1:332,vx:0,vy:26,n:150,len:12,a:.5,clip:up}),
     new Fall(R,{x0:cx-rx+4,x1:cx+rx-4,top,bot,n:520,g:G*s,v0:26,vmax:170,lw:1.7,streak:.15,body:'#2fae98',foam:'#eafaf6',bodyA:.96,foamAt:.8}),
@@ -654,11 +846,11 @@ khone({bg,fg,R}){
   return {layers};
 },
 inga({bg,fg,R}){
-  sky(bg,'#c9d6cf','#efe9d6');
-  ridge(bg,R,205,30,'#6f8f62',30);canopy(bg,R,0,1000,x=>196,22,120,['#4f7a45','#5f8a52','#3f6838'],6,12);
+  skyO(bg,'#c9d6cf','#efe9d6');
+  ridgeO(bg,R,205,30,'#6f8f62',30);canopyO(bg,R,0,1000,x=>196,22,120,['#4f7a45','#5f8a52','#3f6838'],6,12);
   const gy=x=>292+238*(x/W)+16*Math.sin(x/46)+22*smooth((x-300)/60)+26*smooth((x-640)/70)-48*(x/W);
   const bed=[];for(let x=0;x<=W;x+=10)bed.push([x,gy(x)+6]);
-  rock(bg,R,[...bed,[W,H],[0,H]],'#4a4038','#221c18',{strata:30});
+  rockO(bg,R,[...bed,[W,H],[0,H]],'#4a4038','#221c18',{strata:30});
   const P=[];for(let i=0;i<330;i++)P.push({x:R()*W,d:R(),s:.6+R()*.8,a:.3+R()*.7,l:8+R()*22});
   const water={draw(c,dt,t){
       const sy=x=>gy(x)-74+9*Math.sin(x/34-t*3.2)+5*Math.sin(x/13-t*5)+10*Math.sin(x/120+t*.8);
@@ -669,17 +861,17 @@ inga({bg,fg,R}){
         c.globalAlpha=p.a*(1-p.d*.6);c.lineWidth=1.2+2.2*(1-p.d);c.beginPath();c.moveTo(p.x,y0);c.lineTo(x2,y2);c.stroke()}
       c.globalAlpha=1}};
   const layers=[water,new Mist(R,{x0:280,x1:760,y0:330,y1:440,n:26,size:90,rise:10,drift:30,a:.2,life:4,col:'#f1e6cc'})];
-  [[180,0],[395,6],[560,-4],[730,8],[880,0]].forEach(([x,o])=>{const y=gy(x)-40+o;poly(fg,[[x-26,y+40],[x-12,y],[x+16,y-6],[x+34,y+40]],'#2d2620')});
-  poly(fg,[[0,H],[0,560],[300,585],[700,600],[1000,575],[1000,H]],'#2f4a2b');canopy(fg,R,0,1000,x=>580,30,80,['#2f4a2b','#3c5f36','#274025']);
+  [[180,0],[395,6],[560,-4],[730,8],[880,0]].forEach(([x,o])=>{const y=gy(x)-40+o;polyO(fg,[[x-26,y+40],[x-12,y],[x+16,y-6],[x+34,y+40]],'#2d2620')});
+  polyO(fg,[[0,H],[0,560],[300,585],[700,600],[1000,575],[1000,H]],'#2f4a2b');canopyO(fg,R,0,1000,x=>580,30,80,['#2f4a2b','#3c5f36','#274025']);
   txt(fg,'The Congo drops 96 m over about 15 km of rapids',40,112,'left');
   txt(fg,'flow about 10 times Niagara',40,112+FS*1.5,'left');
   return {layers};
 },
 kaieteur({bg,fg,R}){
   const s=1.8,top=112,bot=top+226*s,x0=398,x1=602;
-  sky(bg,'#8fbfdf','#e8f0e4');
-  canopy(bg,R,0,1000,x=>78,20,120,['#2f6534','#3b7a3f','#28572d'],8,15);
-  rock(bg,R,[[0,100],[380,104],[398,top],[602,top],[620,104],[1000,98],[1000,620],[0,620]],'#a5805e','#4f3a2c',{strata:90,joints:20});
+  skyO(bg,'#8fbfdf','#e8f0e4');
+  canopyO(bg,R,0,1000,x=>78,20,120,['#2f6534','#3b7a3f','#28572d'],8,15);
+  rockO(bg,R,[[0,100],[380,104],[398,top],[602,top],[620,104],[1000,98],[1000,620],[0,620]],'#a5805e','#4f3a2c',{strata:90,joints:20});
   bg.fillStyle='#6b3f1c';bg.fillRect(398,96,204,18);
   // the cave undercut behind the fall
   bg.fillStyle='rgba(18,12,8,.75)';bg.beginPath();bg.ellipse(500,360,150,190,0,0,7);bg.fill();
@@ -689,8 +881,8 @@ kaieteur({bg,fg,R}){
     new Fall(R,{x0,x1,top,bot,n:420,g:G*s,v0:20,vmax:140,lw:1.7,streak:.16,body:'#8a5426',foam:'#fbf4e6',bodyA:.95}),
     new Mist(R,{x0:340,x1:660,y0:bot-70,y1:bot+20,n:56,size:150,rise:26,drift:5,a:.3,life:7,grow:1.4}),
   ];
-  for(const d of [-1,1]){const o=d<0?0:W;poly(fg,[[o,620],[o,330],[500+d*330,430],[500+d*190,540],[500+d*150,620]],'#2c5a33');
-    canopy(fg,R,Math.min(o,500+d*150),Math.max(o,500+d*150),x=>330+Math.max(0,280-Math.abs(x-o)*.85)*(Math.abs(x-o)>200?1:.4),200,170,['#2c5a33','#3a7040','#254c2b','#4a8548'])}
+  for(const d of [-1,1]){const o=d<0?0:W;polyO(fg,[[o,620],[o,330],[500+d*330,430],[500+d*190,540],[500+d*150,620]],'#2c5a33');
+    canopyO(fg,R,Math.min(o,500+d*150),Math.max(o,500+d*150),x=>330+Math.max(0,280-Math.abs(x-o)*.85)*(Math.abs(x-o)>200?1:.4),200,170,['#2c5a33','#3a7040','#254c2b','#4a8548'])}
   dimV(fg,640,top,bot,'226 m, one clear drop',1);
   dimV(fg,360,bot-57*s,bot,'Niagara, 57 m',-1);
   dimH(fg,x0,x1,74,'about 113 m wide');
@@ -698,13 +890,13 @@ kaieteur({bg,fg,R}){
 },
 dettifoss({bg,fg,R}){
   const s=5,x0=250,x1=750,top=x=>236+(x-x0)*.09,bot=x=>top(x)+44*s;
-  sky(bg,'#9aa6ad','#dcdfdd');
-  ridge(bg,R,168,14,'#6d6a62',40);
-  poly(bg,[[330,172],[640,172],[x1,top(x1)],[x0,top(x0)]],'#6f6a5e');
-  rock(bg,R,[[0,176],[330,172],[x0,top(x0)],[x0+12,620],[0,620]],'#4a4a48','#1c1d1f',{joints:90,strata:10});
-  rock(bg,R,[[1000,176],[640,172],[x1,top(x1)],[x1-12,620],[1000,620]],'#4f4f4c','#1e1f21',{joints:90,strata:10});
-  rock(bg,R,[[x0,top(x0)],[x1,top(x1)],[x1,620],[x0,620]],'#2c2d2f','#151617',{joints:50});
-  poly(bg,[[x0+6,bot(x0)-30],[x1-6,bot(x1)-30],[x1+70,620],[x0-70,620]],'#6a655a');
+  skyO(bg,'#9aa6ad','#dcdfdd');
+  ridgeO(bg,R,168,14,'#6d6a62',40);
+  polyO(bg,[[330,172],[640,172],[x1,top(x1)],[x0,top(x0)]],'#6f6a5e');
+  rockO(bg,R,[[0,176],[330,172],[x0,top(x0)],[x0+12,620],[0,620]],'#4a4a48','#1c1d1f',{joints:90,strata:10});
+  rockO(bg,R,[[1000,176],[640,172],[x1,top(x1)],[x1-12,620],[1000,620]],'#4f4f4c','#1e1f21',{joints:90,strata:10});
+  rockO(bg,R,[[x0,top(x0)],[x1,top(x1)],[x1,620],[x0,620]],'#2c2d2f','#151617',{joints:50});
+  polyO(bg,[[x0+6,bot(x0)-30],[x1-6,bot(x1)-30],[x1+70,620],[x0-70,620]],'#6a655a');
   const layers=[
     new Flow(R,{x0:300,x1:700,y0:176,y1:280,vx:0,vy:30,n:60,len:12,a:.4,col:'#e9e3d5',clip:c=>{c.moveTo(330,172);c.lineTo(640,172);c.lineTo(x1,top(x1));c.lineTo(x0,top(x0));c.closePath()}}),
     new Fall(R,{x0,x1,top,bot,n:560,g:G*s,v0:40,vmax:260,lw:1.8,streak:.1,minLen:8,body:'#7f786a',foam:'#e6dfd0',foamAt:.75,col:'#f0eadc',bodyA:.97}),
@@ -718,70 +910,125 @@ dettifoss({bg,fg,R}){
   dimH(fg,x0,x1,150,'100 m wide');
   return {layers};
 },
-yosemite({bg,fg,R}){
-  const s=.62,top=82,a=top+436*s,b=a+206*s,c2=b+98*s;
-  sky(bg,'#5d9bd6','#d6e6ee');
-  rock(bg,R,[[0,180],[120,110],[300,86],[430,top],[560,74],[760,96],[900,60],[1000,110],[1000,620],[0,620]],'#d2ccbf','#9b958a',{joints:110,strata:14});
-  poly(bg,[[452,a],[1000,a-24],[1000,a+40],[470,a+26]],'rgba(120,114,104,.5)');
-  poly(bg,[[0,620],[0,c2-6],[360,c2+4],[640,c2-2],[1000,c2+8],[1000,620]],'#5f7d46');
-  // the dark stain the water leaves on the granite
-  bg.fillStyle='rgba(60,54,48,.42)';bg.fillRect(424,top,34,a-top);bg.fillRect(503,b,26,c2-b);
-  pines(bg,R,0,1000,c2+2,90,['#274a2c','#31583a','#1f3d25']);
-  const steps=[[452,a,a+44],[470,a+44,a+88],[488,a+88,b]];
-  const F=[new Fall(R,{x0:430,x1:452,top,bot:a,n:260,g:G*s,v0:10,vmax:80,lw:1.5,streak:.36,atom:.72,wind:12,sway:4,body:'#f4fbfc',bodyA:.92}),
-    ...steps.map(([x,y0,y1])=>new Fall(R,{x0:x,x1:x+18,top:y0,bot:y1,n:36,g:G*s*.5,v0:14,vmax:50,lw:1.3,streak:.3,bodyA:.6})),
-    new Fall(R,{x0:506,x1:526,top:b,bot:c2,n:90,g:G*s,v0:10,vmax:70,lw:1.5,streak:.34,body:'#f4fbfc',bodyA:.9})];
-  const M=[new Mist(R,{x0:400,x1:500,y0:a-60,y1:a+6,n:26,size:110,rise:8,drift:8,a:.26,life:6}),new Mist(R,{x0:480,x1:560,y0:c2-24,y1:c2+4,n:16,size:70,rise:8,drift:4,a:.24,life:5})];
+yosemite({bg,fg,R,still}){
+  // from the valley floor: pale granite, the upper fall in its shaded alcove, a wooded bench, the lower fall, pines and meadow
+  const s=.62,top=82,a=top+436*s,b=a+206*s,c2=b+98*s,fx=441;
+  sky(bg,['#2e6fc0','#6fa3dc','#cfe0ee'],430);
+  cloud(bg,R,130,70,230,44,.85);cloud(bg,R,860,150,200,36,.7);
+  const wob=wave(R,5,60),wob2=wave(R,4,45);
+  const rim=x=>(x<fx-11?150-x*.155:x<fx+11?top:x<530?76-(x-fx)*.26:x<700?52+(x-530)*.02:56+Math.pow((x-700)/300,1.6)*120)+(Math.abs(x-fx)<12?0:wob(x));
+  // the great wall: big smooth panels, darker in the alcove the water falls through
+  cliff(bg,R,{x0:0,x1:1000,top:rim,bot:()=>a+60,w:[30,190],jag:6,lit:['#ded8cb','#bdb6a8'],dark:['#8d8982','#74716c'],shade:x=>.18+.62*Math.exp(-Math.pow((x-fx-10)/120,2))+.25*smooth((x-800)/200),vary:.3,ledges:1,beds:22,t:{cloud:.1,joint:.07}});
+  // black water streaks, warm stains near the fall, and the shaded alcove
+  bg.save();path(bg,[...curve(0,1000,10,rim),[1000,a+60],[0,a+60]]);bg.clip();
+  streaks(bg,R,0,1000,rim,70,{len:[50,250],w:[2,9],a:.42,drop:60});
+  streaks(bg,R,fx-140,fx+200,x=>top+40,16,{col:'#b9783c',len:[60,170],w:[8,26],a:.3,drop:160});
+  bg.fillStyle=grad(bg,fx-34,0,fx+40,0,['rgba(30,30,36,0)',[.4,'rgba(30,30,36,.5)'],[.62,'rgba(30,30,36,.42)'],'rgba(30,30,36,0)']);bg.fillRect(fx-34,top,74,a-top);
+  // exfoliation: the granite peels in great curved sheets
+  bg.lineCap='round';for(const [cx,cy,r,a0,a1] of [[230,430,250,4.1,4.9],[700,470,330,4.3,5.0],[860,380,200,4.0,4.7],[90,360,170,4.4,5.2]]){bg.strokeStyle='rgba(40,40,46,.28)';bg.lineWidth=3;bg.beginPath();bg.arc(cx,cy,r,a0,a1);bg.stroke();bg.strokeStyle='rgba(255,250,240,.3)';bg.lineWidth=1.5;bg.beginPath();bg.arc(cx,cy-3,r,a0,a1);bg.stroke()}
+  bg.restore();
+  // Lost Arrow Spire, standing clear of the wall to the right of the fall
+  fill(bg,[[590,196],[592,140],[595,118],[598,110],[601,121],[603,146],[606,196]],grad(bg,590,0,606,0,['#e2dccf','#b0aa9e']));
+  bg.fillStyle='rgba(30,30,36,.3)';bg.fillRect(606,120,4,76);
+  // pines along the rim
+  pines(bg,R,0,fx-30,x=>rim(x)+2,34,['#2f5a35','#3a6a3f','#264a2b'],8,16);pines(bg,R,fx+40,1000,x=>rim(x)+2,60,['#2f5a35','#3a6a3f','#264a2b'],8,16);
+  // the bench under the upper fall: talus, then the wooded slope the middle cascades cut through
+  const bench=x=>a+8+(x-fx)*.1+wob2(x)*1.5,low=x=>b-34+wob2(x*1.3)*1.6+(x-500)*.02;
+  rock(bg,R,[...curve(0,1000,20,bench),[1000,b+10],[0,b+10]],{c0:'#c9c3b6',c1:'#9d978a',t:{cloud:.25,grain:.15},joints:24,jl:30});
+  forest(bg,R,0,1000,x=>bench(x)+14+10*Math.sin(x/53),x=>low(x)+8,['#35633a','#427544','#2b5230','#55874c'],{r0:3,r1:6,depth:120,mottle:.35});
+  // bare talus cone and the ravine of the middle cascades
+  fill(bg,[[fx-90,a+40],[fx-40,a+8],[fx-6,a-4],[fx+26,a-2],[fx+70,a+16],[fx+120,a+46],[fx+30,a+58]],grad(bg,0,a,0,a+60,['#bdb7aa','#98928a']),{smooth:1});
+  for(let i=0;i<60;i++){const x=fx-70+R()*170,y=a+4+R()*46,r=1.5+R()*3.5;bg.fillStyle=R()<.5?'#d8d2c6':'#7d7972';bg.beginPath();bg.ellipse(x,y,r*1.3,r,0,0,7);bg.fill()}
+  const mx=y=>fx+14+(516-fx-14)*smooth((y-a)/(b-a))+5*Math.sin(y/11);
+  fill(bg,[...curve(a+10,b,8,y=>y).map(([y])=>[mx(y)-6,y]),...curve(a+10,b,8,y=>y).map(([y])=>[mx(y)+7,y]).reverse()],'#77736b',{smooth:1});
+  // the lower cliff band, streaked, with the notch of the lower fall
+  cliff(bg,R,{x0:0,x1:1000,top:x=>low(x)+(Math.abs(x-516)<14?34:0),bot:()=>c2+12,w:[40,150],jag:5,lit:['#d2ccbf','#b3ad9f'],dark:['#86827b','#6d6a65'],shade:x=>.2+.55*Math.exp(-Math.pow((x-516)/60,2)),vary:.3,ledges:1,beds:14,t:{cloud:.08,joint:.08}});
+  bg.save();bg.beginPath();bg.rect(0,b-40,1000,c2-b+52);bg.clip();streaks(bg,R,0,1000,x=>low(x)+4,60,{len:[30,90],w:[2,8],a:.4,drop:10});bg.restore();
+  bg.fillStyle='rgba(30,30,36,.4)';bg.fillRect(503,b,27,c2-b);
+  // valley floor: black oaks and pines, then the meadow
+  fill(bg,[[0,c2+2],[1000,c2+2],[1000,620],[0,620]],grad(bg,0,c2,0,620,['#51753e','#7d9a48']));
+  const L=[];
+  const F=[new Fall(R,{x0:fx-10,x1:fx+11,top,bot:a,n:260,g:G*s,v0:10,vmax:80,lw:1.5,streak:.36,atom:.74,wind:10,spread:17,sway:7,body:'#f6fbfc',bodyA:.97,fine:1.3}),
+    new Fall(R,{x0:504,x1:528,top:b,bot:c2,n:90,g:G*s,v0:10,vmax:70,lw:1.5,streak:.34,spread:5,body:'#f6fbfc',bodyA:.95,fine:1.3})];
+  for(let y=a+6;y<b-2;y+=15)F.push(new Fall(R,{x0:mx(y)-4,x1:mx(y)+5,top:y,bot:Math.min(b,y+16),wind:mx(Math.min(b,y+16))-mx(y),n:10,g:G*s*.5,v0:14,vmax:50,lw:1.2,streak:.3,bodyA:.85,fine:1.8}));
+  const M=[new Mist(R,{x0:fx-40,x1:fx+70,y0:a-70,y1:a+6,n:26,size:110,rise:8,drift:8,a:.26,life:6,op:.55}),new Mist(R,{x0:486,x1:556,y0:c2-22,y1:c2+4,n:16,size:64,rise:8,drift:4,a:.24,life:5,op:.5})];
+  L.push(...F,...M);
+  // trees in front of the lower fall's pool; winter snow and late-summer gold fade in and out with the months
+  const near=still();
+  pines(near,R,0,1000,x=>c2+16+6*Math.sin(x/90),110,['#274a2c','#31583a','#1f3d25','#3a6a3f'],30,62);
+  canopy(near,R,0,1000,x=>c2+18,16,70,['#4f8a3e','#5f9a46','#3f7634'],7,13);
+  fill(near,[[0,620],[0,c2+34],...curve(0,1000,40,x=>c2+36+4*Math.sin(x/70)),[1000,620]],grad(near,0,c2+30,0,620,['#7fa04a','#a6b45a']));
+  for(let i=0;i<500;i++){const x=R()*1000,y=c2+40+R()*46;near.strokeStyle=R()<.5?'rgba(60,90,40,.35)':'rgba(220,220,130,.3)';near.lineWidth=1;near.beginPath();near.moveTo(x,y);near.lineTo(x+(R()-.5)*3,y-4-R()*6);near.stroke()}
+  L.push(near.layer);
+  const gold=still();fill(gold,[[0,620],[0,c2+34],...curve(0,1000,40,x=>c2+36+4*Math.sin(x/70)),[1000,620]],grad(gold,0,c2+30,0,620,['rgba(196,160,70,.75)','rgba(214,180,84,.85)']));
+  const snow=still();snow.fillStyle='rgba(255,255,255,.9)';
+  for(let x=0;x<1000;x+=3){if(Math.abs(x-fx)<14)continue;const y=rim(x);snow.fillRect(x,y-2,3.4,5+3*Math.sin(x/9)+R()*4)}
+  for(let i=0;i<240;i++){const x=R()*1000,y=bench(x)-6+R()*22;snow.globalAlpha=.3+R()*.5;snow.beginPath();snow.ellipse(x,y,3+R()*8,1+R()*1.6,0,0,7);snow.fill()}
+  L.push(gold.layer,snow.layer);
   const mon=D.yosemiteMonths,names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const hud={draw(c,dt,t){const m=(t/2.2+4)%12,i=m|0,k=m-i,f=lerp(mon[i],mon[(i+1)%12],smooth(k));
-      F.forEach(x=>x.flow=f);M.forEach(x=>x.flow=f);
-      const bx=40,by=560,bw=17,gap=5,fs=FS;c.fillStyle='rgba(6,16,18,.6)';c.beginPath();c.roundRect(bx-12,by-64-fs*1.7,12*(bw+gap)+19,64+fs*1.7+30,10);c.fill();
+  const bell=(m,c,w)=>{let d=Math.abs(m-c);d=Math.min(d,12-d);return smooth(1-d/w)};
+  L.push({update(dt,t){const m=(t/2.2+4)%12,i=m|0,f=lerp(mon[i],mon[(i+1)%12],smooth(m-i));this.i=i;this.f=f;
+      F.forEach(x=>x.flow=f);M.forEach(x=>x.flow=f);gold.layer.alpha=bell(m,8.6,3.2);snow.layer.alpha=bell(m,.6,2.4)},
+    draw(c){const i=this.i||0,f=this.f||0,bx=40,by=572,bw=17,gap=5,fs=FS;c.fillStyle='rgba(6,16,18,.66)';c.beginPath();c.roundRect(bx-12,by-64-fs*1.7,12*(bw+gap)+19,64+fs*1.7+30,10);c.fill();
       for(let j=0;j<12;j++){const h=4+mon[j]*46;c.fillStyle=j===i?'#fff':'rgba(255,255,255,.4)';c.fillRect(bx+j*(bw+gap),by-h,bw,h)}
       font(c,Math.min(fs,15));c.fillStyle='#fff';c.textAlign='left';c.textBaseline='middle';
       c.fillText(names[i]+(f>.8?' · peak snowmelt':f<.08?' · often dry':''),bx,by-58-fs*.7);
-      font(c,10);c.fillStyle='rgba(255,255,255,.75)';c.fillText('J',bx+4,by+11);c.fillText('D',bx+11*(bw+gap)+4,by+11)}};
-  dimV(fg,400,top,a,'Upper fall, 436 m',-1);
+      font(c,10);c.fillStyle='rgba(255,255,255,.75)';c.fillText('J',bx+4,by+11);c.fillText('D',bx+11*(bw+gap)+4,by+11)}});
+  dimV(fg,fx-62,top,a,'Upper fall, 436 m',-1);
   txt(fg,'Middle cascades, 206 m',548,(a+b)/2,'left');
   txt(fg,'Lower fall, 98 m',548,(b+c2)/2+6,'left');
-  dimV(fg,760,top,c2,'739 m in all',1);
-  return {layers:[...F,...M,hud]};
+  dimV(fg,790,top,c2,'739 m in all',1);
+  return {layers:L};
 },
-denmark({bg,fg,R}){
+denmark({bg,fg,R,still}){
+  // a cross-section through the strait: cold Nordic water (left) spills over the sill and slides under the Atlantic (right)
   const s=.13,surf=62,sill=surf+D.sillDepth*s,end=sill+3500*s;
-  const g=bg.createLinearGradient(0,surf,0,H);g.addColorStop(0,'#2f7ea3');g.addColorStop(.4,'#12466a');g.addColorStop(1,'#04182a');
-  sky(bg,'#b9d2e2','#e3ecee',surf);bg.fillStyle=g;bg.fillRect(0,surf,W,H-surf);
-  const B=[[0,sill+92],[150,sill+30],[250,sill],[320,sill+14],[470,sill+120],[620,sill+250],[780,sill+370],[900,end-18],[1000,end]];
-  const by=x=>{for(let i=1;i<B.length;i++)if(x<=B[i][0]){const [xa,ya]=B[i-1],[xb,yb]=B[i];return lerp(ya,yb,(x-xa)/(xb-xa))}return end};
-  rock(fg,R,[...B,[W,H],[0,H]],'#3a332b','#15120f',{strata:40});
-  const th=x=>18+52*smooth((x-250)/500);
-  const P=[];for(let i=0;i<300;i++)P.push({x:R()*W,d:R(),s:.5+R(),a:.3+R()*.7,ph:R()*6.28});
-  const plume={draw(c,dt,t){
-      c.beginPath();c.moveTo(0,by(0)-30);for(let x=0;x<=W;x+=20)c.lineTo(x,by(x)-(x<250?30+10*Math.sin(x/40+t):th(x)+7*Math.sin(x/38-t*1.8)));
-      for(let x=W;x>=0;x-=20)c.lineTo(x,by(x));c.closePath();c.fillStyle='rgba(150,225,240,.3)';c.fill();
-      c.strokeStyle='#d4f4fa';c.lineCap='round';
-      for(const p of P){const sp=(p.x<250?22:60+50*smooth((p.x-250)/300))*p.s;p.x+=sp*dt;if(p.x>W+20){p.x=-20}
-        const h=p.x<250?30:th(p.x),y=by(p.x)-3-p.d*h*.9+Math.sin(t*2+p.ph)*2,x2=p.x-sp*.22,y2=by(x2)-3-p.d*(x2<250?30:th(x2))*.9;
-        c.globalAlpha=p.a*.8;c.lineWidth=1.4;c.beginPath();c.moveTo(p.x,y);c.lineTo(x2,y2);c.stroke()}
-      c.globalAlpha=1}};
-  const layers=[
-    new Flow(R,{x0:300,x1:W,y0:surf+14,y1:sill+40,vx:-12,vy:0,n:40,len:16,a:.4,col:'#f3b98a'}),
+  sky(bg,['#9fc0d8','#dfeaee'],surf);cloud(bg,R,300,40,260,26,.7);cloud(bg,R,780,34,200,22,.6);
+  bg.fillStyle=grad(bg,0,surf,0,H,['#2f8fb0',[.12,'#1f6d95'],[.42,'#124a70'],'#041a2e']);bg.fillRect(0,surf,W,H-surf);
+  // the cold side is paler and bluer; the warm side has a green cast near the surface
+  bg.fillStyle=grad(bg,0,0,420,0,['rgba(170,215,240,.34)',[.62,'rgba(170,215,240,.22)'],'rgba(170,215,240,0)']);bg.fillRect(0,surf,420,H-surf);
+  bg.fillStyle=grad(bg,0,surf,0,surf+220,['rgba(70,200,170,.3)','rgba(70,200,170,0)']);bg.fillRect(330,surf,W-330,220);
+  // sunlight reaching down from the surface
+  for(let i=0;i<14;i++){const x=40+R()*940,w=14+R()*46,l=90+R()*170;bg.fillStyle=grad(bg,0,surf,0,surf+l,[`rgba(220,245,255,${.05+R()*.08})`,'rgba(220,245,255,0)']);bg.beginPath();bg.moveTo(x,surf);bg.lineTo(x+w,surf);bg.lineTo(x+w-l*.28,surf+l);bg.lineTo(x-l*.28,surf+l);bg.fill()}
+  for(let i=0;i<260;i++){bg.fillStyle=`rgba(220,240,250,${.08+R()*.22})`;bg.beginPath();bg.arc(R()*W,surf+8+R()*(H-surf),.5+R()*1.1,0,7);bg.fill()}
+  // sea floor: a basin, the sill, then the long slope into the deep Atlantic
+  const by=spline([[-40,sill+110],[60,sill+78],[160,sill+26],[250,sill],[330,sill+16],[470,sill+120],[620,sill+250],[780,sill+370],[900,end-18],[1040,end+4]]);
+  const th=x=>x<250?34-10*smooth((x-120)/130):24+50*smooth((x-250)/520);
+  // travel time along the bed, so that one shader speed gives slow water behind the sill and fast water on the slope
+  const speed=x=>x<250?26:60+56*smooth((x-250)/300),X=[0],Tm=[0];for(let x=0;x<W+30;x+=5){X.push(x+5);Tm.push(Tm[Tm.length-1]+5/speed(x))}
+  const TT=Tm[Tm.length-1],xa=k=>{const q=k*TT;let i=1;while(i<Tm.length-1&&Tm[i]<q)i++;return lerp(X[i-1],X[i],(q-Tm[i-1])/(Tm[i]-Tm[i-1]))};
+  const plume=new Flow(R,{P:(k,t)=>{const x=xa(k)-15;return [x,by(x)+6-(th(x)+12)*(1-t)]},cols:80,rows:4,uw:1500,vl:70,vel:[1500/TT,0],mode:1,a:.95,col:'#d9f6fb',scale:1.5,edge:[0,0],under:['#96e1f0',.3],n:260,len:22,lw:1.4});
+  const L=[
+    new Flow(R,{x0:300,x1:W,y0:surf+10,y1:sill+50,vx:-12,vy:0,n:40,len:16,a:.34,col:'#ffd2a8',scale:.8,edge:[.2,.3]}),
     plume,
-    {draw(c,dt,t){const x=520+Math.sin(t*.2)*30,y=surf+Math.sin(t*1.4)*1.2;c.fillStyle='#22313a';c.beginPath();c.moveTo(x-16,y-5);c.lineTo(x+18,y-5);c.lineTo(x+13,y+1);c.lineTo(x-13,y+1);c.closePath();c.fill();c.fillRect(x-6,y-10,9,5)}},
   ];
-  fg.strokeStyle='rgba(255,255,255,.55)';fg.lineWidth=1.5;fg.beginPath();fg.moveTo(0,surf);fg.lineTo(W,surf);fg.stroke();
+  const bed=still();
+  rock(bed,R,[...curve(-20,W+20,10,by),[W+20,H+10],[-20,H+10]],{cols:['#4d5560',[.25,'#2c3340'],'#0c1118'],t:{cloud:.14}});
+  // sediment layers follow the shape of the floor
+  bed.save();path(bed,[...curve(-20,W+20,10,by),[W+20,H+10],[-20,H+10]]);bed.clip();
+  for(let i=1;i<26;i++){const o=i*i*.55+i*5+R()*4;bed.strokeStyle=i%3?`rgba(8,12,18,${.1+R()*.14})`:`rgba(170,190,205,${.05+R()*.07})`;bed.lineWidth=1+R()*2.5;path(bed,curve(-20,W+20,14,x=>by(x)+o+Math.sin(x/70+i)*2),{close:false});bed.stroke()}
+  bed.restore();
+  bed.strokeStyle='rgba(200,214,220,.4)';bed.lineWidth=2.5;path(bed,curve(-20,W+20,10,by),{close:false});bed.stroke();
+  L.push(bed.layer);
+  // a ship on the surface and two icebergs on the cold side, for flavour
+  L.push({draw(c,dt,t){const x=560+Math.sin(t*.2)*30,y=surf+Math.sin(t*1.4)*1.2;c.fillStyle='#22313a';c.beginPath();c.moveTo(x-16,y-5);c.lineTo(x+18,y-5);c.lineTo(x+13,y+1);c.lineTo(x-13,y+1);c.closePath();c.fill();c.fillRect(x-6,y-10,9,5);c.fillStyle='#c94a3a';c.fillRect(x-14,y-1,27,2)}});
+  for(const [x,w] of [[96,30],[196,18]]){fill(fg,[[x-w,surf],[x-w*.5,surf-w*.55],[x+w*.1,surf-w*.8],[x+w*.6,surf-w*.3],[x+w,surf]],'#f4fafc');fill(fg,[[x-w,surf],[x+w,surf],[x+w*.7,surf+w*.9],[x-w*.2,surf+w*1.5],[x-w*.8,surf+w*.7]],'rgba(200,236,246,.5)')}
+  fg.strokeStyle='rgba(255,255,255,.6)';fg.lineWidth=1.5;fg.beginPath();fg.moveTo(0,surf);fg.lineTo(W,surf);fg.stroke();
+  // depth ticks, to the same scale
+  for(let m=1000;m<=4000;m+=1000){const y=surf+m*s;seg(fg,W-10,y,W,y);txt(fg,nf.format(m)+' m',W-15,y,'right',FS*.82)}
   txt(fg,'Nordic Seas: cold, dense water',24,surf+26,'left');
   txt(fg,'warmer Atlantic water',W-24,surf+26,'right');
   txt(fg,`sill, about ${D.sillDepth} m down`,262,sill-22,'left');
-  dimV(fg,948,sill,end,'about 3,500 m',-1);
-  dimV(fg,640,surf+40,surf+40+979*s,'Angel Falls, 979 m',1);
-  return {layers};
+  dimV(fg,872,sill,end,'about 3,500 m',-1);
+  dimV(fg,620,surf+40,surf+40+979*s,'Angel Falls, 979 m',1);
+  return {layers:L};
 },
 guaira({bg,fg,R}){
   const l1=262,m1=338,l2=350,base=440;
-  sky(bg,'#93bfdc','#ebeede');
-  canopy(bg,R,0,1000,x=>196,26,150,['#2f6534','#3b7a3f','#28572d'],8,16);
+  skyO(bg,'#93bfdc','#ebeede');
+  canopyO(bg,R,0,1000,x=>196,26,150,['#2f6534','#3b7a3f','#28572d'],8,16);
   bg.fillStyle='#9c7a58';bg.fillRect(0,226,W,l1-226);
-  rock(bg,R,[[0,l1],[W,l1],[W,base+6],[0,base+6]],'#5a4538','#2a1f1a',{strata:50,joints:40});
+  rockO(bg,R,[[0,l1],[W,l1],[W,base+6],[0,base+6]],'#5a4538','#2a1f1a',{strata:50,joints:40});
   bg.fillStyle='#6a5646';bg.fillRect(0,m1-2,W,16);
   bg.fillStyle='#8a7052';bg.fillRect(0,base,W,H-base);
   const layers=[new Flow(R,{x0:0,x1:W,y0:228,y1:l1-2,vx:0,vy:12,n:70,len:9,a:.4,col:'#ead9bd'})];
@@ -804,7 +1051,6 @@ guaira({bg,fg,R}){
   return {layers};
 },
 };
-
 /* ============================== APP ============================== */
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d'),glc=$('gl'),stage=$('stage');
@@ -827,6 +1073,7 @@ function build(){
   if(scene&&GLR.ok)GLR.free(scene);
   const mk=()=>{const c=document.createElement('canvas');c.width=pw;c.height=ph;const x=c.getContext('2d');x.setTransform(K,0,0,K,0,0);return x};
   const bg=mk(),fg=mk(),f=FALLS[cur];
+  {const g=fg.createRadialGradient(W/2,H*.48,H*.42,W/2,H*.5,W*.66);g.addColorStop(0,'rgba(4,10,14,0)');g.addColorStop(1,'rgba(4,10,14,.34)');fg.fillStyle=g;fg.fillRect(0,0,W,H)} // soft vignette under the labels
   // still() gives a scene one more painted layer to place anywhere in its stack (rock or trees in front of water, say)
   const out=SCENES[f.id]({bg,fg,R:mulberry(f.seed||7),still(){const x=mk();x.layer=new Still(x.canvas);return x}});
   scene={layers:[new Still(bg.canvas),...out.layers],fg:fg.canvas,dirty:true};
