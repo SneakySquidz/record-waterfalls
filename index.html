@@ -1434,11 +1434,11 @@ guaira({bg,fg,R,still}){
   L.push(mist,mist2,mist3);
   // the reservoir: rises over the falls in the 14 days from 13 to 27 October 1982. Its water is drawn clear enough to see the drowned steps
   const lake=new Flow(R,{dyn:true,lvl:0,P:(u,v)=>[u*W,lerp(lerp(H+12,160,lake.lvl),H+12,v)],cols:1,rows:1,uw:1000,vl:460,vel:[14,0],n:26,len:24,a:.42,col:'#eaf4f4',base:[['#5f97a6',.74],['#173a4c',.95]],edge:[0,0],scale:.6,aniso:1.4,streaks:.5,rim:.6});
-  lake.update=function(dt,t){const T=22,u=t%T;let lvl,cap;
+  lake.update=function(dt,t){const T=25,u=t%T;let lvl,cap;
     if(u<7){lvl=0;cap='Before 1982: seven groups of falls on the Paraná'}
     else if(u<13){lvl=smooth((u-7)/6);cap='October 1982: the Itaipu reservoir rises'}
     else if(u<20){lvl=1;cap='Today: the falls lie under the reservoir'}
-    else{lvl=1-smooth((u-20)/2);cap='Before 1982: seven groups of falls on the Paraná'}
+    else{lvl=1-smooth((u-20)/5);cap='Before 1982: seven groups of falls on the Paraná'}
     this.lvl=lvl;this.cap=cap;const ys=lerp(H+12,160,lvl);
     // water stops falling where the lake has reached it
     for(const [o,ya,yb] of falls)o.flow=Math.sqrt(clamp((ys-ya)/(yb-ya),0,1));
@@ -1446,7 +1446,7 @@ guaira({bg,fg,R,still}){
   L.push(lake,{draw(c){pill(c,lake.cap||'Before 1982: seven groups of falls on the Paraná',W/2,112,'center',FS*1.1)}});
   dimV(fg,976,l1,base,'114 m in all',-1);
   dimV(fg,22,l1,t1,'40 m',1);
-  return {layers:L,dur:22};
+  return {layers:L,dur:25};
 },
 };
 
