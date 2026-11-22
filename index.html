@@ -1481,7 +1481,7 @@ angel({bg,fg,R}){
   // and the rim are pulled apart again into a cliff; and the rim is broken into blocks, which the data is too coarse to show.
   const HI=930,lo=x=>250-82*Math.exp(-Math.pow(x/170,2));
   const shape=(x,z)=>{const r=dem(x,z)-DEM.lip+TOP,l=lo(x);if(r<=l||r>=HI)return r+(r>=HI?9*nB(x*.012,z*.012):0);
-    let u=(r-l)/(HI-l);u=clamp(u+.065*Math.round(nA(x*.016,z*.016)*3)/3+.04*nA(x*.06,z*.06),0,1);const p=Math.pow(u,7),q=Math.pow(1-u,7);return l+(HI-l)*p/(p+q)};
+    let u=(r-l)/(HI-l);u=clamp(u+(.065*Math.round(nA(x*.016,z*.016)*3)/3+.04*nA(x*.06,z*.06))*smooth(u*3.5),0,1);const p=Math.pow(u,7),q=Math.pow(1-u,7);return l+(HI-l)*p/(p+q)};
   let off=0;const wallZ=x=>{let z=-1500;while(z<1200&&shape(x,z)<600)z+=6;return z},z0=wallZ(0);off=TOP-shape(0,z0+40);
   const hgt=(x,z)=>{const y=shape(x,z);return y>HI-20?y+off:y+2.5*nB(x*.03,z*.03)*smooth((300-y)/100)},edge=wallZ;
   // height field: finer near the cliff, where the detail is
