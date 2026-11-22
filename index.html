@@ -108,7 +108,7 @@ a{color:var(--accent)}
 .notes{font-size:13.5px;color:var(--ink-2);max-width:78ch}
 .notes ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 @media (max-width:900px){.viewer{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:520px){.picker{grid-template-columns:repeat(2,minmax(0,1fr))}.row{grid-template-columns:minmax(0,104px) minmax(0,1fr) minmax(70px,auto);gap:8px;font-size:13px}.pick b{font-size:18px}}
+@media (max-width:520px){.stage .badge{display:none}.picker{grid-template-columns:repeat(2,minmax(0,1fr))}.row{grid-template-columns:minmax(0,104px) minmax(0,1fr) minmax(70px,auto);gap:8px;font-size:13px}.pick b{font-size:18px}}
 </style>
 </head>
 <body>
@@ -837,7 +837,9 @@ function person(c,x,y,h,col='#e8502e'){c.fillStyle='#1b1b1b';c.fillRect(x-h*.11,
 
 /* Labels */
 function font(c,fs,wt=500){c.font=`${wt} ${fs}px "Instrument Sans",system-ui,sans-serif`}
-function txt(c,s,x,y,al='left',fs=FS,wt=500){font(c,fs,wt);c.textAlign=al;c.textBaseline='middle';c.lineJoin='round';c.lineWidth=fs*.3;c.strokeStyle='rgba(6,16,18,.72)';c.strokeText(s,x,y);c.fillStyle='#fff';c.fillText(s,x,y)}
+function txt(c,s,x,y,al='left',fs=FS,wt=500){font(c,fs,wt);
+  const w=c.measureText(s).width,l=al==='center'?x-w/2:al==='right'?x-w:x;if(w<W-12)x+=clamp(l,6,W-6-w)-l; // a label never runs off the stage
+  c.textAlign=al;c.textBaseline='middle';c.lineJoin='round';c.lineWidth=fs*.3;c.strokeStyle='rgba(6,16,18,.72)';c.strokeText(s,x,y);c.fillStyle='#fff';c.fillText(s,x,y)}
 function seg(c,x0,y0,x1,y1){for(const [w,s] of [[4,'rgba(6,16,18,.55)'],[1.6,'#fff']]){c.lineWidth=w;c.strokeStyle=s;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke()}}
 function dimV(c,x,y0,y1,s,side=1){seg(c,x,y0,x,y1);seg(c,x-6,y0,x+6,y0);seg(c,x-6,y1,x+6,y1);txt(c,s,x+side*11,(y0+y1)/2,side>0?'left':'right')}
 function dimH(c,x0,x1,y,s,below=false){seg(c,x0,y,x1,y);seg(c,x0,y-6,x0,y+6);seg(c,x1,y-6,x1,y+6);txt(c,s,(x0+x1)/2,y+(below?1:-1)*(FS*.9+2),'center')}
@@ -1100,7 +1102,7 @@ niagara({bg,fg,R,still}){
     pill(c,`Olympic pools over the crest so far: ${nf.format(Math.floor(t*pools))}`,cx,H-34)}});
   dimV(fg,cx+96,top(cx),bot(cx),'57 m',1);
   txt(fg,'Horseshoe Falls: a crest about 790 m long, curved like a U',cx,hz-34,'center');
-  txt(fg,'tour boat',662,578,'left');
+  txt(fg,'tour boat',662,Math.min(578,H-36-FS*1.5),'left');
   return {layers:L};
 },
 khone({bg,fg,R,still}){
@@ -1148,7 +1150,7 @@ khone({bg,fg,R,still}){
   txt(fg,'the drop itself is only about 21 m',W/2,H-30,'center');
   // Niagara's Horseshoe crest at the same scale, for a sense of the width
   const nw=FALLS.find(f=>f.id==='niagara').width/FALLS.find(f=>f.id==='khone').width*(X1-X0);
-  dimH(fg,X0+16,X0+16+nw,H-112,'');txt(fg,"Niagara's crest, 790 m, same scale",X0+28+nw,H-112,'left',FS*.9);
+  const ny=H-58-Math.max(54,FS*2.3+6);dimH(fg,X0+16,X0+16+nw,ny,'');txt(fg,"Niagara's crest, 790 m, same scale",X0+28+nw,ny,'left',FS*.9);
   return {layers:L};
 },
 inga({bg,fg,R,still}){
@@ -1282,7 +1284,7 @@ dettifoss({bg,fg,R,still}){
   L.push(new Mist(R,{x0:560,x1:760,y0:230,y1:330,n:30,size:200,rise:30,drift:44,a:.2,life:7,grow:1.4,col:'#eeeae0',sh:'#c3c0b8',op:.18}));
   // people on the east rim, to scale (1.7 m)
   for(const [dx,col] of [[60,'#e8502e'],[74,'#f0c040'],[81,'#3a7bd0']])person(fg,x1+dx,rimR(x1+dx)-3,1.75*s,col);
-  txt(fg,'people, to scale',x1+96,rimR(x1+70)-8,'left');
+  font(fg,FS);if(x1+96+fg.measureText('people, to scale').width<W-6)txt(fg,'people, to scale',x1+96,rimR(x1+70)-8,'left');else txt(fg,'people, to scale',W-8,rimR(x1+70)-14-FS*.8,'right');
   dimV(fg,x1+30,top(x1),bot(x1),'44 m',1);
   dimH(fg,x0,x1,150,'100 m wide');
   return {layers:L};
