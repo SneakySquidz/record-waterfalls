@@ -107,9 +107,30 @@ a{color:var(--accent)}
 .scale-note{font-size:13px;color:var(--muted);margin:12px 0 0}
 .notes{font-size:14px;color:var(--ink-2);max-width:78ch}
 .notes ul{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.cap{margin:0;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.cap b{font-weight:500;color:var(--ink-2)}
+/* the surveyor's dimension line, as on the stage, marks what is measured; a dashed line marks what is only drawn */
+.cap span::before{content:"";display:inline-block;width:20px;height:8px;margin-right:8px;vertical-align:baseline;box-sizing:border-box}
+.cap .k::before{border-left:2px solid;border-right:2px solid;background:linear-gradient(currentColor,currentColor) center/100% 2px no-repeat}
+.cap .o::before,.cap .e::before{height:5px;border-top:2px dashed}
+.look{margin:0;color:var(--ink)}
+.look b{font-weight:600}
+.terms{font-size:14px;color:var(--ink-2)}
+.terms summary{cursor:pointer;color:var(--accent);font-weight:500;padding:4px 0}
+.terms dl{margin:8px 0 0;display:flex;flex-direction:column;gap:8px}
+.terms dt{font-weight:600;color:var(--ink)}
+.terms dd{margin:0}
+.what{margin:0 0 12px;font-size:14px;color:var(--ink-2);max-width:70ch}
+.refrow{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) minmax(86px,auto);gap:12px;align-items:center;min-height:36px;padding:4px 8px;font-size:14px;color:var(--muted)}
+.refrow .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.refrow .t{height:12px}
+.refrow .t i{display:block;height:100%;box-sizing:border-box;border:1px dashed var(--muted);border-radius:4px;min-width:2px}
+.refrow .v{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.why ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;max-width:78ch;font-size:14px;color:var(--ink-2)}
+.why li b{color:var(--ink);font-weight:600}
 @media (max-width:900px){.viewer{grid-template-columns:minmax(0,1fr)}}
-@media (pointer:coarse){.tbtn,.ibtn{height:44px}.row{min-height:44px}}
-@media (max-width:520px){.stage .badge{display:none}.picker{grid-template-columns:repeat(2,minmax(0,1fr))}.row{grid-template-columns:minmax(0,104px) minmax(0,1fr) minmax(70px,auto);gap:8px;font-size:13px}.pick b{font-size:18px}}
+@media (pointer:coarse){.tbtn,.ibtn{height:44px}.row{min-height:44px}.terms summary{padding:12px 0}}
+@media (max-width:520px){.stage .badge{display:none}.picker{grid-template-columns:repeat(2,minmax(0,1fr))}.row,.refrow{grid-template-columns:minmax(0,104px) minmax(0,1fr) minmax(70px,auto);gap:8px;font-size:13px}.pick b{font-size:18px}}
 </style>
 </head>
 <body>
@@ -131,20 +152,26 @@ a{color:var(--accent)}
         <i class="tbar" id="tbar"></i>
         <div class="badge" id="badge"></div>
       </div>
+      <p class="cap" id="cap"></p>
       <div class="bar">
         <button class="ibtn" id="prev" type="button" aria-label="Previous waterfall">‹</button>
         <button class="ibtn" id="next" type="button" aria-label="Next waterfall">›</button>
-        <span class="now" id="now"></span>
+        <span class="now" id="now" role="status"></span>
         <button class="ibtn" id="pause" type="button" aria-pressed="false">Pause</button>
         <button class="ibtn" id="tour" type="button" aria-pressed="false">Tour</button>
       </div>
     </div>
-    <aside class="info" aria-live="polite">
+    <aside class="info" aria-label="About this waterfall">
       <p class="tag" id="i-tag"></p>
       <h2 id="i-name"></h2>
       <p class="place" id="i-place"></p>
       <p class="blurb" id="i-blurb"></p>
+      <p class="look" id="i-look"></p>
       <dl class="figs" id="i-figs"></dl>
+      <details class="terms">
+        <summary>What these measures mean</summary>
+        <dl id="terms"></dl>
+      </details>
       <div class="claim" id="i-claim"></div>
       <p class="anim" id="i-anim"></p>
       <p class="src" id="i-src"></p>
@@ -157,8 +184,15 @@ a{color:var(--accent)}
     <h2>Side by side</h2>
     <p>The same twelve, ranked on one measure at a time. Select a row to open that waterfall.</p>
     <div class="tabs" id="tabs" role="group" aria-label="Measure"></div>
+    <p class="what" id="what"></p>
     <div class="rows" id="rows"></div>
     <p class="scale-note" id="scale-note"></p>
+  </section>
+
+  <section class="sec why">
+    <h2>Why records disagree</h2>
+    <p>Waterfall records are softer than they look. Four reasons, each with a case from this page.</p>
+    <ol id="why"></ol>
   </section>
 
   <section class="sec notes">
@@ -1592,6 +1626,8 @@ function select(i,fromHash){
   cur=(i+FALLS.length)%FALLS.length;const f=FALLS[cur];t=0;slowN=0;slowT=0;
   $('badge').textContent=f.tag;$('now').textContent=`${cur+1} of ${FALLS.length} · ${f.name}`;
   $('i-tag').textContent=f.tag;$('i-name').textContent=f.name;$('i-place').textContent=f.place;$('i-blurb').textContent=f.blurb;
+  $('i-look').innerHTML=`<b>What to look for.</b> ${LOOK[f.id]}`;cv.setAttribute('aria-label',`Animated drawing of ${f.name}. ${LOOK[f.id]}`);
+  {const [k,o,e]=SCALE[f.id];$('cap').innerHTML=(k?`<span class="k"><b>To scale:</b> ${k}</span>`:'')+(o?`<span class="o"><b>Not to scale:</b> ${o}</span>`:'')+`<span class="e"><b>Drawn by eye:</b> ${e}</span>`}
   const figs=[['Total height',fmt(f.height,'m'),f.heightNote],['Tallest single drop',fmt(f.drop,'m'),f.drop?`${freeFall(f.drop).toFixed(1)} s in free fall (computed, no air drag)`:null],
     ['Width',fmt(f.width,'m'),f.widthNote],['Mean flow',fmt(f.flow,'m³/s'),f.flow?`${f.flow/POOL>=10?nf.format(Math.round(f.flow/POOL)):(f.flow/POOL).toFixed(2)} Olympic pools a second`:f.flowNote]];
   $('i-figs').innerHTML=figs.map(([k,v,n])=>`<div><dt>${k}</dt><dd>${v}${n?`<small>${n}</small>`:''}</dd></div>`).join('');
@@ -1604,14 +1640,60 @@ function select(i,fromHash){
   if(!fromHash){try{history.replaceState(null,'','#'+f.id)}catch(e){location.hash=f.id}}
   build();
 }
-const METRICS={height:{label:'Total height',unit:'m',log:false,note:'Bars are to scale with each other.'},
-  width:{label:'Width',unit:'m',log:false,note:'Bars are to scale with each other.'},
-  flow:{label:'Mean flow',unit:'m³/s',log:true,note:'Log scale: each step along the bar is ten times more water. On a straight scale only the Denmark Strait would be visible.'}};
+/* Teaching text. Nothing here adds a fact: every line restates a figure, a claim or an animation note from the data above. */
+// what to look for in each scene
+const LOOK={
+ angel:'Watch the stream thin out on the way down: the drop is so long that much of it turns to mist before it reaches the ground.',
+ tugela:'Count the five leaps, and see how thin the stream is: it drains a very small catchment and is sometimes dry.',
+ victoria:'One unbroken line of falling water 1.7 km wide, and the spray climbing out of the crack it drops into.',
+ iguazu:'Many separate falls in two steps instead of one curtain, and the Devil\'s Throat, which takes roughly half the water.',
+ niagara:'Not the height but the fullness. Follow the counter: about one Olympic pool goes over every second.',
+ khone:'Compare the short bar for Niagara\'s crest with the full width: nearly 11 km of channels, each one only a low step.',
+ inga:'No single big drop: a very large river going down ledge after ledge, none of them higher than about 21 m.',
+ kaieteur:'A whole river falling 226 m in one piece. The Niagara mark at the base shows that is four times its height.',
+ dettifoss:'The grey colour is sediment carried by the meltwater. The people on the rim give the scale.',
+ yosemite:'Watch the months go by: the fall peaks in May and is often a trickle or dry by August.',
+ denmark:'This one is under the sea: cold, dense water sliding down a slope, with Angel Falls marked for depth.',
+ guaira:'Seven groups of falls, then the reservoir that rose over them in 14 days in October 1982.'};
+// shown under the stage: [to scale, not to scale, drawn by eye], a short form of each "In the animation" note
+const SCALE={
+ angel:['the 807 m plunge, the 979 m total, the fall time, the Eiffel Tower','','the detail of the cliff, the mist, the forest, the sky'],
+ tugela:['the total height, the 411 m tier, the fall speed, the Eiffel Tower','','the heights of the three lower tiers, the width of the stream, the rock, the spray'],
+ victoria:['the width, the fall time','the height, drawn three times too tall','the spray, the size of the rainbow, the river and the forest'],
+ iguazu:['','the width: a few dozen streams stand in for about 275','the rock, the forest, the size and place of the streams, the spray'],
+ niagara:['the 57 m height at the centre of the crest, the fall speed, the pool counter','','the foam, the spray, the boat, the banks'],
+ khone:['the width, the bar for Niagara\'s crest','the length of the white water','the islands, outcrops, channels and foam'],
+ inga:['the pool counter, which runs at the mean flow','everything in the view','the ledges, the rock islands, the hills'],
+ kaieteur:['the height, the width, Niagara\'s 57 m, the fall speed','','the cave, the cliff, the plunge pool, the forest'],
+ dettifoss:['the height, the width, the people on the rim, the fall speed','','the basalt columns, the banks, the sky, the size of the rainbow'],
+ yosemite:['the three sections','','the yearly flow curve, how thin the fall gets, the granite, snow and meadow'],
+ denmark:['the depths, the Angel Falls marker','the horizontal distance, compressed enormously','the speed and thickness of the current, the sea floor, the icebergs, the ship'],
+ guaira:['the 114 m total, the 40 m top step','','the lower steps, the shelves, the layout of the seven groups, the see-through reservoir']};
+// the page's own terms, as it uses them
+const TERMS=[
+ ['Total height','From the top of the highest drop to the bottom of the lowest, with any cascades or rapids between them counted in. Kaieteur\'s 251 m is a 226 m drop plus 25 m of rapids.'],
+ ['Tallest single drop','The tallest single step within the fall. The free-fall time under it is computed from this height.'],
+ ['Plunge','A drop where the water falls clear of the rock, as it does for 807 m at Angel Falls.'],
+ ['Tier','One of several separate drops, one below another. Tugela Falls has five.'],
+ ['Width','How wide the falling water is from side to side. Where a source says where it was measured, the note under the figure repeats it.'],
+ ['Mean flow','The average amount of water going over, in cubic metres a second (m³/s). Flows change through the year, so a mean hides the highs and the lows.'],
+ ['No sourced figure','No figure with a source was found. It does not mean zero.']];
+const jump=(id,s)=>`<a href="#${id}">${s}</a>`;
+const WHY=[
+ ['Where the top and the bottom are taken to be.',`${jump('angel','Angel Falls')}' 979 m total comes from a 1949 survey taken about 2 km away, and the World Waterfall Database questions it. A 2016 measurement put ${jump('tugela','Tugela Falls')} at 983 m, taller than Angel Falls, but it was taken from over a kilometre away and has not been confirmed.`],
+ ['What counts as a waterfall.',`${jump('inga','Inga Falls')} drops 96 m over about 15 km, and Wikipedia says it is not widely considered a true waterfall, but rapids. ${jump('khone','Khone Falls')} is a set of cascades, not one curtain. The ${jump('denmark','Denmark Strait')} overflow is a current flowing down a slope under the sea, not a free fall.`],
+ ['When the flow was measured, and by whom.',`Flows change through the year. This page uses 11,610 m³/s for ${jump('khone','Khone Falls')}; other sources give about 11,000 and about 9,500. ${jump('dettifoss','Dettifoss')} is quoted at 193 m³/s and at 269 m³/s for the warm months. ${jump('yosemite','Yosemite Falls')} is often a trickle or completely dry by August.`],
+ ['Which measure the record is for.',`${jump('victoria','Victoria Falls')} is not the widest, the tallest or the largest by flow: its record is for width and height together. ${jump('kaieteur','Kaieteur Falls')} is commonly described as the single-drop waterfall with the highest flow, but no body certifies that.`]];
+const METRICS={height:{label:'Total height',unit:'m',log:false,what:'Total height in metres (m): from the top of the highest drop to the bottom of the lowest. The dashed bar is the Eiffel Tower, for scale.',ref:['Eiffel Tower',330],note:'Bars are to scale with each other.'},
+  width:{label:'Width',unit:'m',log:false,what:'Width in metres (m): how wide the falling water is from side to side.',note:'Bars are to scale with each other.'},
+  flow:{label:'Mean flow',unit:'m³/s',log:true,what:'Mean flow in cubic metres of water a second (m³/s), averaged over the year. The dashed bar is one Olympic pool, about 2,500 m³, every second.',ref:['One Olympic pool a second',POOL],note:'Log scale: each step along the bar is ten times more water. On a straight scale only the Denmark Strait would be visible.'}};
 function compare(){
   const m=METRICS[metric],vals=FALLS.map(f=>f[metric]).filter(v=>typeof v==='number'),mx=Math.max(...vals),mn=Math.min(...vals);
   const w=v=>m.log?(Math.log10(v)-Math.log10(mn/3))/(Math.log10(mx)-Math.log10(mn/3))*100:v/mx*100;
-  const list=[...FALLS].sort((a,b)=>(typeof b[metric]==='number'?b[metric]:-1)-(typeof a[metric]==='number'?a[metric]:-1));
+  const list=[...FALLS,...(m.ref?[{ref:1,name:m.ref[0],[metric]:m.ref[1]}]:[])].sort((a,b)=>(typeof b[metric]==='number'?b[metric]:-1)-(typeof a[metric]==='number'?a[metric]:-1));
+  $('what').textContent=m.what;
   $('rows').innerHTML=list.map(f=>{const v=f[metric],ok=typeof v==='number';
+    if(f.ref)return `<div class="refrow"><span class="n">${f.name}</span><span class="t"><i style="width:${w(v).toFixed(1)}%"></i></span><span class="v">${nf.format(v)} ${m.unit}</span></div>`;
     return `<button type="button" class="row${ok?'':' na'}${f.id===FALLS[cur].id?' on':''}" data-id="${f.id}"><span class="n">${f.name}</span><span class="t">${ok?`<i style="width:${w(v).toFixed(1)}%"></i>`:''}</span><span class="v">${ok?nf.format(v)+' '+m.unit:'no sourced figure'}</span></button>`}).join('');
   $('scale-note').textContent=m.note;
   document.querySelectorAll('#tabs .ibtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===metric));
@@ -1623,6 +1705,9 @@ function init(){
   $('tabs').addEventListener('click',e=>{const b=e.target.closest('.ibtn');if(b){metric=b.dataset.m;compare()}});
   $('rows').addEventListener('click',e=>{const b=e.target.closest('.row');if(b){stopTour();select(FALLS.findIndex(f=>f.id===b.dataset.id));document.querySelector('.viewer').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}});
   $('notes').innerHTML=NOTES.map(n=>`<li>${n}</li>`).join('');
+  $('terms').innerHTML=TERMS.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  $('why').innerHTML=WHY.map(([k,v])=>`<li><b>${k}</b> ${v}</li>`).join('');
+  $('why').addEventListener('click',e=>{if(e.target.closest('a')){stopTour();document.querySelector('.viewer').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}});
   $('prev').onclick=()=>{stopTour();select(cur-1)};$('next').onclick=()=>{stopTour();select(cur+1)};
   $('pause').onclick=()=>setPaused(!paused);
   $('tour').onclick=()=>{tour=!tour;tourT=0;$('tour').setAttribute('aria-pressed',tour);stage.classList.toggle('touring',tour);tbar.style.transform='scaleX(0)';if(tour)setPaused(false)};
